@@ -10,21 +10,19 @@ import ListItemText from '@mui/material/ListItemText';
 import { styled, useTheme, type Theme, type CSSObject } from '@mui/material/styles';
 import MuiDrawer from '@mui/material/Drawer';
 import MuiAppBar, { type AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
-import CssBaseline from '@mui/material/CssBaseline';
 import Divider from '@mui/material/Divider';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
 import HomeIcon from '@mui/icons-material/Home';
 import { signIn, signOut, useSession } from "next-auth/react";
 import { Button} from "@mui/material";
-import AllInboxIcon from '@mui/icons-material/AllInbox';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import Person2Icon from '@mui/icons-material/Person2';
 import GridViewIcon from '@mui/icons-material/GridView';
+import logo from '../../public/logo.png';
+import Image from "next/image";
 
 const drawerWidth = 240;
 
@@ -117,37 +115,29 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children, pageIndex }) =>
 
   return (
     <Box sx={{ display: 'flex' }}>
-      <CssBaseline />
       <AppBar position="fixed" open={open}>
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            edge="start"
-            sx={{
-              marginRight: 5,
-              ...(open && { display: 'none' }),
-            }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            LOGO
-          </Typography>
-          <div className="flex flex-col items-center justify-center gap-4">
+        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            {/* Adjust margin-right for space between menu icon and logo */}
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              onClick={handleDrawerOpen}
+              edge="start"
+              sx={{
+                marginRight: 2,
+                ...(open && { display: 'none' }),
+              }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Image src={logo} alt="logo" width={150} height={50} />
+
             <Button onClick={sessionData ? () => void signOut() : () => void signIn()}  >
-                <Typography variant="h6" noWrap component="div" color="common.white" >
-                {sessionData
-                ? "Sign out"
-                : "Sign in"}
-                </Typography>
-             
+              <Typography noWrap component="div" color="common.white" >
+                {sessionData ? "Sign out" : "Sign in"}
+              </Typography>
             </Button>
-        </div>
-
         </Toolbar>
-
       </AppBar>
       <Drawer variant="permanent" open={open}>
         <DrawerHeader>
@@ -165,6 +155,7 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children, pageIndex }) =>
                   justifyContent: open ? 'initial' : 'center',
                   px: 2.5,
                 }}
+                href={index === 0 ? '/' : index === 1 ? '/page' : index === 2 ? '/registered' : '/profile'}
               >
                 <ListItemIcon
                   sx={{
@@ -175,7 +166,6 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children, pageIndex }) =>
                 >
                   {index === 0 && <HomeIcon />}
                   {index === 1 && <GridViewIcon/>}
-                  {/* {index === 2 && <AllInboxIcon/>} */}
                   {index === 2 && <AppRegistrationIcon />}
                   {index === 3 && <Person2Icon />}
                 </ListItemIcon>
@@ -185,12 +175,11 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children, pageIndex }) =>
           ))}
         </List>
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 1 }}>
         <DrawerHeader />
         {children}
         Page Index: {pageIndex}
       </Box>
-      <Toolbar />
       </Box>
 
   );
