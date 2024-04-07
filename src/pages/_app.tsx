@@ -1,15 +1,11 @@
 import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { type AppType } from "next/app";
-import { Inter } from "next/font/google";
+import React from "react";
+// import { ThemeProvider } from "@mui/material";
+// import { themeOptions } from '../styles/theme';
 
 import { api } from "~/utils/api";
-
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
 
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
@@ -17,9 +13,9 @@ const MyApp: AppType<{ session: Session | null }> = ({
 }) => {
   return (
     <SessionProvider session={session}>
-      <main className={`font-sans ${inter.variable}`}>
+      {/* <ThemeProvider theme={themeOptions}> */}
         <Component {...pageProps} />
-      </main>
+      {/* </ThemeProvider> */}
     </SessionProvider>
   );
 };

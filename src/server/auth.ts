@@ -10,6 +10,7 @@ import GoogleProvider from "next-auth/providers/google";
 
 import { env } from "~/env";
 import { db } from "~/server/db";
+type UserRole = "volunteer" | "coordinator" | "admin";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -22,7 +23,7 @@ declare module "next-auth" {
     user: DefaultSession["user"] & {
       id: string;
       // ...other properties
-      // role: UserRole;
+      role: UserRole;
     };
   }
 
@@ -39,13 +40,24 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    async session({ session, user }) {
+      // Fetch user's role from the database using Prisma
+      const userWithRole = await db.user.findUnique({
+        where: { id: user.id },
+        select: { role: true },
+      });
+
+      // Assign the role to the session if it exists
+      if (userWithRole) {
+        session.user.role = userWithRole.role as UserRole;
+        session.user.id = user.id;
+        session.user.email = user.email;
+        session.user.name = user.name;
+        session.user.image = user.image;
+      }
+
+      return session;
+    },
   },
   adapter: PrismaAdapter(db) as Adapter,
   providers: [

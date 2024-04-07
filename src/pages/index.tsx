@@ -1,12 +1,8 @@
-import {  useSession } from "next-auth/react";
+import { Typography } from "@mui/material";
 import Head from "next/head";
-import { api } from "~/utils/api";
-import { Button, Link } from "@mui/material";
-import BaseLayout from "~/components/VolunteerBaseLayout";
+import BaseLayout from "~/components/BaseLayout";
 
 export default function Home() {
-
-
   return (
     <>
       <Head>
@@ -17,11 +13,7 @@ export default function Home() {
       <BaseLayout pageIndex={0} >
       <main >
           <div>
-        <Button variant="contained" color="primary">
-          <Link href="/page">
-            Go to Page
-          </Link>
-        </Button>
+            <Typography variant="h5">YTM ROVERS LANDING PAGES</Typography>
           </div>
       </main>
       </BaseLayout>
