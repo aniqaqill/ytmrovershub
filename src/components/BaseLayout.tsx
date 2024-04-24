@@ -17,12 +17,14 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import HomeIcon from '@mui/icons-material/Home';
 import { signIn, signOut, useSession } from "next-auth/react";
-import { Button} from "@mui/material";
+import { Avatar, Button, Menu, MenuItem, Tooltip} from "@mui/material";
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
-import Person2Icon from '@mui/icons-material/Person2';
 import GridViewIcon from '@mui/icons-material/GridView';
+import AllInboxIcon from '@mui/icons-material/AllInbox';
 import logo from '../../public/logo.png';
 import Image from "next/image";
+import router from "next/router";
+import PeopleIcon from '@mui/icons-material/People';
 
 const drawerWidth = 240;
 
@@ -100,10 +102,24 @@ type BaseLayoutProps = {
 };
 
 
-const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children, pageIndex }) => {
+const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children }) => {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
-    const { data: sessionData } = useSession();
+  const { data: sessionData } = useSession();
+  const userRole = sessionData?.user?.role;
+
+  
+  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
+
+  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElUser(event.currentTarget);
+  };
+
+  const handleCloseUserMenu = () => {
+    setAnchorElUser(null);
+  };
+
+  
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -112,6 +128,41 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children, pageIndex }) =>
   const handleDrawerClose = () => {
     setOpen(false);
   };
+
+  // Define lists based on user roles
+  const lists = [
+    {
+      role: undefined, // Default role
+      items: [
+        { text: 'Home', icon: <HomeIcon />, href: '/' },
+        // { text: 'About', icon: <GridViewIcon />, href: '/about' },
+      ],
+    },
+    {
+      role: 'coordinator',
+      items: [
+        { text: 'Home', icon: <HomeIcon />, href: '/' },
+        { text: 'Manage Program', icon: <AllInboxIcon />, href: '/coordinator/manage-program' },
+        { text: 'Aid Material', icon: <AppRegistrationIcon />, href: '/coordinator/aid-material' },
+      ],
+    },
+    {
+      role: 'volunteer',
+      items: [
+        { text: 'Home', icon: <HomeIcon />, href: '/' },
+        { text: 'View Program', icon: <GridViewIcon />, href: '/volunteer/view-program' },
+        { text: 'Registered Program', icon: <AppRegistrationIcon />, href: '/volunteer/registered' },
+      ],
+    },
+    {
+      role: 'admin',
+      items: [
+        { text: 'Home', icon: <HomeIcon />, href: '/' },
+        { text: 'User List', icon: <PeopleIcon/>, href: '/admin/user-list' },
+      ],
+    }
+  ];
+  const currentList = lists.find(list => list.role === userRole);
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -131,12 +182,43 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children, pageIndex }) =>
               <MenuIcon />
             </IconButton>
             <Image src={logo} alt="logo" width={150} height={50} />
-
-            <Button onClick={sessionData ? () => void signOut() : () => void signIn()}  >
-              <Typography noWrap component="div" color="common.white" >
-                {sessionData ? "Sign out" : "Sign in"}
-              </Typography>
-            </Button>
+            <Box sx={{ flexGrow: 0 }}>
+            {sessionData ? (
+            <Tooltip title="Open settings">
+                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                {sessionData?.user?.image && (
+                    <Avatar src={sessionData?.user?.image} />
+                )}
+                </IconButton>
+            </Tooltip> ) : (
+            <Button color="inherit" onClick={() => signIn()}>Sign in</Button>
+            )}
+                <Menu
+                    sx={{ mt: '45px' }}
+                    id="menu-appbar"
+                    anchorEl={anchorElUser}
+                    anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                    }}
+                    keepMounted
+                    transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                    }}
+                    open={Boolean(anchorElUser)}
+                    onClose={handleCloseUserMenu}
+                >
+                    {/* Profile option */}
+                    <MenuItem onClick={() => router.push('/profile')}>
+                    <Typography textAlign="center">Profile</Typography>
+                    </MenuItem>
+                    {/* Sign out option */}
+                    <MenuItem onClick={() => signOut()}>
+                    <Typography textAlign="center">Sign out</Typography>
+                    </MenuItem>
+                </Menu>
+                </Box>
         </Toolbar>
       </AppBar>
       <Drawer variant="permanent" open={open}>
@@ -146,46 +228,41 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children, pageIndex }) =>
           </IconButton>
         </DrawerHeader>
         <Divider />
+
+        {/* Render list items based on user role */}
         <List>
-          {['Home', 'View Program','Registered Program', 'Profile'].map((text, index) => (
-            <ListItem key={text} disablePadding sx={{ display: 'block' }}>
-              <ListItemButton
-                sx={{
-                  minHeight: 48,
-                  justifyContent: open ? 'initial' : 'center',
-                  px: 2.5,
-                }}
-                href={index === 0 ? '/' : index === 1 ? '/page' : index === 2 ? '/registered' : '/profile'}
-              >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 0,
-                    mr: open ? 3 : 'auto',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {index === 0 && <HomeIcon />}
-                  {index === 1 && <GridViewIcon/>}
-                  {index === 2 && <AppRegistrationIcon />}
-                  {index === 3 && <Person2Icon />}
-                </ListItemIcon>
-                <ListItemText primary={text} sx={{ opacity: open ? 1 : 0 }} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
+  {currentList?.items.map((item) => (
+    <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
+      <ListItemButton
+        sx={{
+          minHeight: 48,
+          justifyContent: open ? 'initial' : 'center',
+          px: 2.5,
+        }}
+        href={item.href}
+      >
+        <ListItemIcon
+          sx={{
+            minWidth: 0,
+            mr: open ? 3 : 'auto',
+            justifyContent: 'center',
+          }}
+        >
+          {item.icon}
+        </ListItemIcon>
+        <ListItemText primary={item.text} sx={{ opacity: open ? 1 : 0 }} />
+      </ListItemButton>
+    </ListItem>
+  ))}
+</List>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 1 }}>
         <DrawerHeader />
         {children}
-        Page Index: {pageIndex}
       </Box>
       </Box>
 
   );
 }
-
-
-
 
 export default BaseLayoutDrawer;
