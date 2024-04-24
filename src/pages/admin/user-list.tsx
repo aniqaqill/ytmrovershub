@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, TextField, MenuItem, Select, FormControl, InputLabel, type SelectChangeEvent } from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
@@ -68,15 +68,18 @@ export default function Page() {
   };
 
 
-  //riderect to home page if user are not authorized in 5 seconds show the coutndown in the page
-  if (!isLoggedInAdmin) {
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 2000);
-  }
-
   //get user list
   const { data: userList } = getAllUsersQuery;
+
+  useEffect(() => {
+    if (!isLoggedInAdmin) {
+      const timer = setTimeout(() => {
+        window.location.href = "/";
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedInAdmin]);
 
   return (
     <div>
