@@ -24,6 +24,7 @@ import AllInboxIcon from '@mui/icons-material/AllInbox';
 import logo from '../../public/logo.png';
 import Image from "next/image";
 import router from "next/router";
+import PeopleIcon from '@mui/icons-material/People';
 
 const drawerWidth = 240;
 
@@ -153,6 +154,13 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children }) => {
         { text: 'Registered Program', icon: <AppRegistrationIcon />, href: '/volunteer/registered' },
       ],
     },
+    {
+      role: 'admin',
+      items: [
+        { text: 'Home', icon: <HomeIcon />, href: '/' },
+        { text: 'User List', icon: <PeopleIcon/>, href: '/admin/user-list' },
+      ],
+    }
   ];
   const currentList = lists.find(list => list.role === userRole);
 

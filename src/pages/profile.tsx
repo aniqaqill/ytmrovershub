@@ -71,7 +71,7 @@ export default function Page() {
   const isLoggedInVolunteer =
     sessionData?.user &&
     (sessionData.user.role === "volunteer" ||
-      sessionData.user.role === "coordinator");
+      sessionData.user.role === "coordinator" )
 
   return (
     <div>
