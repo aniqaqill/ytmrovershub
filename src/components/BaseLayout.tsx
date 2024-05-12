@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
@@ -130,7 +130,7 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children }) => {
   };
 
   // Define lists based on user roles
-  const lists = [
+  const lists = useMemo(() => [
     {
       role: undefined, // Default role
       items: [
@@ -161,7 +161,7 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children }) => {
         { text: 'User List', icon: <PeopleIcon/>, href: '/admin/user-list' },
       ],
     }
-  ];
+  ], []);
   const currentList = lists.find(list => list.role === userRole);
 
   return (
