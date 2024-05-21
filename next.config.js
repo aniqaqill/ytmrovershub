@@ -4,10 +4,22 @@
  */
 await import("./src/env.js");
 
+
+
+
 /** @type {import("next").NextConfig} */
 const config = {
   reactStrictMode: true,
-
+    images: {
+      domains: ['rnkqnviezsjkhfovplik.supabase.co'],
+        remotePatterns: [
+        {
+          protocol: 'https',
+          hostname: 'images.unsplash.com',
+          port:'',
+        },  ],
+    
+    },
   /**
    * If you are using `appDir` then you must comment the below `i18n` config out.
    *
@@ -16,7 +28,11 @@ const config = {
   i18n: {
     locales: ["en"],
     defaultLocale: "en",
+    
   },
+  
 };
+
+
 
 export default config;

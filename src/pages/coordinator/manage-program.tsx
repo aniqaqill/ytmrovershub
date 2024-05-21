@@ -1,14 +1,12 @@
 import React, { useMemo, useEffect, useState } from "react";
-import { Button, Dialog, DialogTitle, DialogContent,  Divider, Table, TableBody, TableCell, TableHead, TableRow, Typography, CircularProgress, Tooltip} from "@mui/material";
+import { Button, Dialog, DialogTitle, DialogContent, DialogActions, Divider, Table, TableBody, TableCell, TableHead, TableRow, Typography, CircularProgress, Tooltip, Snackbar, Alert } from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { api } from "~/utils/api";
 import DeleteIcon from '@mui/icons-material/Delete';
-// import EditIcon from '@mui/icons-material/Edit';
 import PreviewIcon from '@mui/icons-material/Preview';
 import ViewDetailProgram from "~/components/program/view-detail-program";
-
 
 interface ProgramType {
   id: string;
@@ -19,9 +17,8 @@ interface ProgramType {
   location: string;
   maxVolunteer: number;
   coordinatorId: string;
+  image: string;
 }
-
-
 
 export default function Page() {
   const { data: sessionData } = useSession();
@@ -29,42 +26,68 @@ export default function Page() {
     return sessionData?.user && sessionData.user.role === "coordinator";
   }, [sessionData]);
   const [selectedProgram, setSelectedProgram] = useState<ProgramType | null>(null);
+  const [programToDelete, setProgramToDelete] = useState<ProgramType | null>(null);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
   const { data: programs, isLoading, isError, refetch: refetchPrograms } = api.programInfo.getAllProgram.useQuery();
   const deleteProgram = api.programInfo.deleteProgramById.useMutation();
 
-  
   useEffect(() => {
     const fetchData = async () => {
       try {
         await refetchPrograms();
       } catch (error) {
-        // Handle error if needed
         console.error('Error fetching programs:', error);
       }
     };
-  
+
     void fetchData();
   }, [refetchPrograms]);
-
 
   const handleViewProgram = (program: ProgramType) => {
     setSelectedProgram(program);
   };
-  
 
   const handleCloseModal = () => {
     setSelectedProgram(null);
   };
 
-  const handleDeleteProgram = async (program: ProgramType) => {
+  const handleOpenConfirmation = (program: ProgramType) => {
+    setProgramToDelete(program);
+    setIsConfirmationOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!programToDelete) return;
     try {
-      await deleteProgram.mutateAsync({ id: program.id });
+      await deleteProgram.mutateAsync({ id: programToDelete.id });
+      setIsConfirmationOpen(false);
       await refetchPrograms();
+      setSnackbarOpen(true); // Show the snackbar on successful deletion
     } catch (error) {
-      // Handle error if needed
       console.error('Error deleting program:', error);
     }
-  }
+  };
+
+  const handleCancelDelete = () => {
+    setIsConfirmationOpen(false);
+    setProgramToDelete(null);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
+    // Helper function to format the date
+    const formatDate = (dateString :Date ) => {
+      //format the date to a more readable format which is dd/mm/yyyy
+      const date = new Date(dateString);
+      const day = date.getDate();
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+     
+    };
 
   return (
     <div>
@@ -79,9 +102,9 @@ export default function Page() {
             </Link>
             <br />
             {isLoading ? (
-              <CircularProgress /> // Show loading indicator while fetching data
+              <CircularProgress />
             ) : isError ? (
-              <Typography variant="body1">Error fetching programs. Please try again later.</Typography> // Show error message if fetch fails
+              <Typography variant="body1">Error fetching programs. Please try again later.</Typography>
             ) : (
               <Table>
                 <TableHead>
@@ -98,15 +121,14 @@ export default function Page() {
                       <TableCell>{program.name}</TableCell>
                       <TableCell>{program.location}</TableCell>
                       <TableCell>
-                        {new Date(program.startDate).toLocaleDateString()}
-                        {program.endDate ? ` - ${new Date(program.endDate).toLocaleDateString()}` : ''}
+                        {formatDate(program.startDate)} - {program.endDate ? formatDate(program.endDate) : "N/A"}
                       </TableCell>
                       <TableCell>
                         <Tooltip title="View Program">
                           <Button onClick={() => handleViewProgram(program)}><PreviewIcon/></Button>
                         </Tooltip>
                         <Tooltip title="Delete Program">
-                          <Button onClick={() => handleDeleteProgram(program)}><DeleteIcon color="error"/></Button>
+                          <Button onClick={() => handleOpenConfirmation(program)}><DeleteIcon color="error"/></Button>
                         </Tooltip>
                       </TableCell>
                     </TableRow>
@@ -126,8 +148,26 @@ export default function Page() {
         <DialogContent>
           {selectedProgram && <ViewDetailProgram program={selectedProgram} />}
         </DialogContent>
-
       </Dialog>
+
+      {/* Confirmation dialog for deleting a program */}
+      <Dialog open={isConfirmationOpen} onClose={handleCancelDelete}>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Typography>Are you sure you want to delete this program?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDelete}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} color="error">Delete</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for successful deletion */}
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: '100%' }}>
+          Program deleted successfully!
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
