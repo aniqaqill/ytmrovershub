@@ -52,7 +52,8 @@ model Program {
   name          String
   description   String
   startDate     DateTime
-  endDate       DateTime?
+  startTime     String            
+  endTime       String
   location      String
   maxVolunteer  Int
   coordinatorId String

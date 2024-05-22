@@ -1,5 +1,9 @@
 import React, { useMemo, useEffect, useState } from "react";
-import { Button, Dialog, DialogTitle, DialogContent, DialogActions, Divider, Table, TableBody, TableCell, TableHead, TableRow, Typography, CircularProgress, Tooltip, Snackbar, Alert } from "@mui/material";
+import {
+  Button, Dialog, DialogTitle, DialogContent, DialogActions,
+  Divider, Table, TableBody, TableCell, TableHead, TableRow,
+  Typography, CircularProgress, Tooltip, Snackbar, Alert
+} from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -7,13 +11,15 @@ import { api } from "~/utils/api";
 import DeleteIcon from '@mui/icons-material/Delete';
 import PreviewIcon from '@mui/icons-material/Preview';
 import ViewDetailProgram from "~/components/program/view-detail-program";
-
+import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3"; 
+import { env } from "~/env";
 interface ProgramType {
   id: string;
   name: string;
   description: string;
   startDate: Date;
-  endDate: Date | null;
+  startTime: string;
+  endTime: string;
   location: string;
   maxVolunteer: number;
   coordinatorId: string;
@@ -32,6 +38,15 @@ export default function Page() {
   const { data: programs, isLoading, isError, refetch: refetchPrograms } = api.programInfo.getAllProgram.useQuery();
   const deleteProgram = api.programInfo.deleteProgramById.useMutation();
 
+  const s3Client = useMemo(() => new S3Client({
+    forcePathStyle: true,
+    region: "ap-southeast-1",
+    endpoint: env.NEXT_PUBLIC_s3_endpoint,
+    credentials: {
+      accessKeyId: env.NEXT_PUBLIC_s3_access_key,
+      secretAccessKey: env.NEXT_PUBLIC_s3_secret_access,
+    },
+  }), []);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -60,12 +75,25 @@ export default function Page() {
   const handleConfirmDelete = async () => {
     if (!programToDelete) return;
     try {
+      // Start deletion process
+      const deleteParams = {
+        Bucket: "program_media", // Replace with your S3 bucket name
+        Key: programToDelete.image,
+      };
+      const deleteCommand = new DeleteObjectCommand(deleteParams);
+      await s3Client.send(deleteCommand);
+
+      console.log('Image deleted successfully from S3');
+
+      // Delete the program from the database
       await deleteProgram.mutateAsync({ id: programToDelete.id });
+      console.log('Program deleted successfully from the database');
+
       setIsConfirmationOpen(false);
       await refetchPrograms();
       setSnackbarOpen(true); // Show the snackbar on successful deletion
     } catch (error) {
-      console.error('Error deleting program:', error);
+      console.error('Error during deletion process:', error);
     }
   };
 
@@ -78,16 +106,15 @@ export default function Page() {
     setSnackbarOpen(false);
   };
 
-    // Helper function to format the date
-    const formatDate = (dateString :Date ) => {
-      //format the date to a more readable format which is dd/mm/yyyy
-      const date = new Date(dateString);
-      const day = date.getDate();
-      const month = date.getMonth() + 1;
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-     
-    };
+  // Helper function to format the date
+  const formatDate = (dateString: Date) => {
+    // format the date to a more readable format which is dd/mm/yyyy
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
   return (
     <div>
@@ -96,7 +123,7 @@ export default function Page() {
           <>
             <Typography variant="h5" margin={2}>Manage Programs</Typography>
             <Divider />
-            <br /> 
+            <br />
             <Link href="/coordinator/create-program">
               <Button variant="contained"> Create New Program </Button>
             </Link>
@@ -116,23 +143,31 @@ export default function Page() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {programs?.map((program) => (
-                    <TableRow key={program.id}>
-                      <TableCell>{program.name}</TableCell>
-                      <TableCell>{program.location}</TableCell>
-                      <TableCell>
-                        {formatDate(program.startDate)} - {program.endDate ? formatDate(program.endDate) : "N/A"}
-                      </TableCell>
-                      <TableCell>
-                        <Tooltip title="View Program">
-                          <Button onClick={() => handleViewProgram(program)}><PreviewIcon/></Button>
-                        </Tooltip>
-                        <Tooltip title="Delete Program">
-                          <Button onClick={() => handleOpenConfirmation(program)}><DeleteIcon color="error"/></Button>
-                        </Tooltip>
+                {(programs?.length ?? 0) > 0 ? (
+                    programs?.map((program) => (
+                      <TableRow key={program.id}>
+                        <TableCell>{program.name}</TableCell>
+                        <TableCell>{program.location}</TableCell>
+                        <TableCell>
+                          {formatDate(program.startDate)}
+                        </TableCell>
+                        <TableCell>
+                          <Tooltip title="View Program">
+                            <Button onClick={() => handleViewProgram(program)}><PreviewIcon /></Button>
+                          </Tooltip>
+                          <Tooltip title="Delete Program">
+                            <Button onClick={() => handleOpenConfirmation(program)}><DeleteIcon color="error" /></Button>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">
+                      <Alert severity="info">There are no program created and available yet.</Alert>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             )}

@@ -69,6 +69,7 @@ export const env = createEnv({
     NEXT_PUBLIC_s3_secret_access : process.env.NEXT_PUBLIC_s3_secret_access,
     NEXT_PUBLIC_s3_endpoint : process.env.NEXT_PUBLIC_s3_endpoint,
     NEXT_PUBLIC_s3_bucket : process.env.NEXT_PUBLIC_s3_bucket,
+
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

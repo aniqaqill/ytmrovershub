@@ -1,22 +1,19 @@
 import React, { useState, useMemo } from "react";
-import { Typography, Divider, Box, FormControl, Button, TextField, Grid, Snackbar, Alert } from "@mui/material";
+import {
+  Typography, Divider, Box, FormControl, Button, TextField,
+  Grid, Snackbar, Alert
+} from "@mui/material";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import BaseLayout from "~/components/BaseLayout";
 import { api } from "~/utils/api";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { S3Client } from "@aws-sdk/client-s3";
-import { env } from '~/env';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
 import Image from "next/image";
-
-const endpoint = env.NEXT_PUBLIC_s3_endpoint;
-const region = "ap-southeast-1";
-const accessKey = env.NEXT_PUBLIC_s3_access_key;
-const secretKey = env.NEXT_PUBLIC_s3_secret_access;
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { env } from "~/env";
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -35,13 +32,15 @@ export default function Page() {
   const [programName, setProgramName] = useState("");
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startTime, setStartTime] = useState("00:00");
+  const [endTime, setEndTime] = useState("00:00");
   const [location, setLocation] = useState("");
   const [maxVolunteer, setMaxVolunteer] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const router = useRouter();
+
 
   const isLoggedInCoordinator = useMemo(() => {
     return sessionData?.user && sessionData.user.role === "coordinator";
@@ -62,23 +61,23 @@ export default function Page() {
     }
   };
 
-  const s3Client = new S3Client({
+  const s3Client = useMemo(() => new S3Client({
     forcePathStyle: true,
-    region,
-    endpoint,
+    region: "ap-southeast-1",
+    endpoint: env.NEXT_PUBLIC_s3_endpoint,
     credentials: {
-      accessKeyId: accessKey,
-      secretAccessKey: secretKey,
+      accessKeyId: env.NEXT_PUBLIC_s3_access_key,
+      secretAccessKey: env.NEXT_PUBLIC_s3_secret_access,
     },
-  });
+  }), []);
 
   const handleUploadImage = async (file: File) => {
     const key = `program/${file.name}`;
     const putObjectCommand = new PutObjectCommand({
       Bucket: "program_media",
       Key: key,
-      Body: file, // Include the file data here
-      ContentType: file.type, // Dynamically set the content type based on the file
+      Body: file,
+      ContentType: file.type,
     });
     await s3Client.send(putObjectCommand);
     return key;
@@ -86,7 +85,7 @@ export default function Page() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!programName || !description || !startDate || !endDate || !location || !maxVolunteer || !file) {
+    if (!programName || !description || !startDate || !startTime || !endTime || !location || !maxVolunteer || !file) {
       return;
     }
 
@@ -97,24 +96,29 @@ export default function Page() {
         name: programName,
         description,
         startDate,
-        endDate,
+        startTime: startTime,
+        endTime: endTime,
         location,
         maxVolunteer,
         coordinatorId,
-        image: image,
+        image,
       });
 
+      // Reset form fields
       setProgramName("");
       setDescription("");
       setStartDate("");
-      setEndDate("");
+      setStartTime("00:00");
+      setEndTime("00:00");
       setLocation("");
       setMaxVolunteer(0);
       setFile(null);
       setFilePreview(null);
 
+      // Show success snackbar
       setSnackbarOpen(true);
 
+      // Redirect after a delay
       setTimeout(() => {
         void router.push("/coordinator/manage-program");
       }, 3000);
@@ -146,9 +150,9 @@ export default function Page() {
               margin={2}
             >
               <Grid container spacing={2}>
-                <Grid item xs={12}>
+                <Grid item xs={12} sm={8}>
                   <FormControl fullWidth>
-                    <Typography variant="body2">Program Name</Typography>
+                    <Typography variant="body2">Program Name :</Typography>
                     <TextField
                       id="program-name"
                       value={programName}
@@ -159,12 +163,13 @@ export default function Page() {
                 </Grid>
                 <Grid item xs={12}>
                   <FormControl fullWidth>
-                    <Typography variant="body2">Description</Typography>
+                    <Typography variant="body2">Description : </Typography>
                     <TextField
                       id="description"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       required
+                      multiline
                     />
                   </FormControl>
                 </Grid>
@@ -180,15 +185,25 @@ export default function Page() {
                     />
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={3}>
                   <FormControl fullWidth>
-                    <Typography variant="body2">End Date</Typography>
+                    <Typography variant="body2">Start Time</Typography>
                     <TextField
-                      id="end-date"
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      required
+                      id="start-time"
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <FormControl fullWidth>
+                    <Typography variant="body2">End Time</Typography>
+                    <TextField
+                      id="end-time"
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
                     />
                   </FormControl>
                 </Grid>
@@ -204,32 +219,47 @@ export default function Page() {
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <Typography variant="body2">Max Volunteer</Typography>
-                    <TextField
-                      id="max-volunteer"
-                      type="number"
-                      value={maxVolunteer}
-                      onChange={(e) => setMaxVolunteer(Number(e.target.value))}
-                      required
-                    />
-                  </FormControl>
+                <FormControl fullWidth>
+                  <Typography variant="body2">Max Volunteer</Typography>
+                  <TextField
+                    id="max-volunteer"
+                    type="number"
+                    value={maxVolunteer}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      if (value >= 0) {
+                        setMaxVolunteer(value);
+                      }
+                    }}
+                    inputProps={{ min: 1 }}
+                    required
+                  />
+                </FormControl>
                 </Grid>
                 <Grid item xs={12}>
                   <FormControl fullWidth>
                     <Typography variant="body2">Program Image</Typography>
                     <Button
                       component="label"
-                      role={undefined}
                       variant="contained"
                       startIcon={<CloudUploadIcon />}
                     >
                       Upload file
-                      <VisuallyHiddenInput type="file" accept="image/*" onChange={handleFileChange} />
+                      <VisuallyHiddenInput
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                      />
                     </Button>
                     {file && (
                       <Box mt={2} textAlign="center">
-                        <Image src={filePreview!} alt={file.name} style={{ maxHeight: 200  }} width={200} height={200} />
+                        <Image
+                          src={filePreview!}
+                          alt={file.name}
+                          style={{ maxHeight: 200 }}
+                          width={200}
+                          height={200}
+                        />
                       </Box>
                     )}
                   </FormControl>

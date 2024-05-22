@@ -2,14 +2,14 @@ import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc';
 import { PrismaClient } from '@prisma/client';
 
-
 const prisma = new PrismaClient();
 
 const ProgramInput = z.object({
   name: z.string(),
   description: z.string(),
   startDate: z.string(),
-  endDate: z.string().nullable(),
+  startTime: z.string(),
+  endTime: z.string(),
   location: z.string(),
   maxVolunteer: z.number(),
   coordinatorId: z.string(),
@@ -52,7 +52,8 @@ export const programInfoRouter = createTRPCRouter({
         name: input.name,
         description: input.description,
         startDate: new Date(input.startDate),
-        endDate: input.endDate ? new Date(input.endDate) : null,
+        startTime: input.startTime,
+        endTime: input.endTime,
         location: input.location,
         maxVolunteer: input.maxVolunteer,
         coordinatorId: input.coordinatorId, // Connect program with coordinator
@@ -71,10 +72,12 @@ export const programInfoRouter = createTRPCRouter({
       name: z.string(),
       description: z.string(),
       startDate: z.string(),
-      endDate: z.string().nullable(),
+      startTime  : z.string(),
+      endTime: z.string(),
       coordinatorId: z.string(),
       location: z.string(),
-      maxVolunteer: z.number()
+      maxVolunteer: z.number(),
+      image: z.string(),
     }))
     .mutation(async ({ input }) => {
       const program = await prisma.program.update({
@@ -83,10 +86,12 @@ export const programInfoRouter = createTRPCRouter({
           name: input.name,
           description: input.description,
           startDate: new Date(input.startDate),
-          endDate: input.endDate ? new Date(input.endDate) : null,
+          startTime: input.startTime,
+          endTime: input.endTime,
           coordinatorId: input.coordinatorId,
           location: input.location,
-          maxVolunteer: input.maxVolunteer
+          maxVolunteer: input.maxVolunteer,
+          image: input.image
         },
         include: {
           coordinator: true, // Include coordinator information

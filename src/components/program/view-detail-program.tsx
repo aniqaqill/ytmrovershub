@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Grid,
   Table,
@@ -16,9 +16,17 @@ import {
   DialogTitle,
   Snackbar,
   Alert,
+  FormControl,
+  Box,
+  
 } from "@mui/material";
 import { api } from "~/utils/api";
 import Image from "next/image";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { styled } from '@mui/material/styles';
+import { env } from "~/env";
+
 
 const endpoint = "https://rnkqnviezsjkhfovplik.supabase.co/storage/v1/object/public/";
 const bucket = "program_media/";
@@ -28,7 +36,8 @@ interface ProgramType {
   name: string;
   description: string;
   startDate: Date;
-  endDate: Date | null;
+  startTime: string;
+  endTime: string;
   location: string;
   maxVolunteer: number;
   coordinatorId: string;
@@ -49,6 +58,33 @@ interface ViewDetailProgramProps {
    
   };
 
+  const formatTimeTo12Hour = (time24: string) => {
+    const [hoursStr, minutes] = time24.split(":");
+    const hours = parseInt(hoursStr ?? "0", 10); // Use "0" as the default value if hoursStr is undefined
+  
+    if (isNaN(hours)) {
+      return ""; // Return an empty string if the parsing fails
+    }
+  
+    const suffix = hours >= 12 ? "PM" : "AM";
+    const hours12 = ((hours % 12) || 12).toString().padStart(2, "0");
+    return `${hours12}:${minutes} ${suffix}`;
+  };
+
+  const VisuallyHiddenInput = styled('input')({
+    clip: 'rect(0 0 0 0)',
+    clipPath: 'inset(50%)',
+    height: 1,
+    overflow: 'hidden',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    whiteSpace: 'nowrap',
+    width: 1,
+  });
+  
+  
+
 export default function ViewDetailProgram(props: ViewDetailProgramProps) {
   const { program } = props;
   const { data: fullProgramInfo, refetch: refetchProgram } =
@@ -58,7 +94,18 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const updateProgram = api.programInfo.updateProgramById.useMutation();
+  const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
 
+  const s3Client = useMemo(() => new S3Client({
+    forcePathStyle: true,
+    region: "ap-southeast-1",
+    endpoint: env.NEXT_PUBLIC_s3_endpoint,
+    credentials: {
+      accessKeyId: env.NEXT_PUBLIC_s3_access_key,
+      secretAccessKey: env.NEXT_PUBLIC_s3_secret_access,
+    },
+  }), []);
 
   useEffect(() => {
     setEditedProgram(program);
@@ -79,27 +126,71 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
     await refetchProgram(); // Refetch the program data to reset the changes
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const selectedFile = files[0];
+      setFile(selectedFile!);
+      setFilePreview(URL.createObjectURL(selectedFile!));
+    }
+  };
+
+
   const handleSaveClick = async () => {
     try {
       if (!editedProgram) return;
       const editedProgramAsString = {
         ...editedProgram,
         startDate: editedProgram.startDate.toISOString(),
-        endDate: editedProgram.endDate
-          ? editedProgram.endDate.toISOString()
-          : "",
         maxVolunteer: Number(editedProgram.maxVolunteer), // Ensure maxVolunteer is a number
       };
+  
+      // Check if a file is selected for upload
+      if (file) {
+        // If there is an old image, delete it from storage
+        if (program.image) {
+          const deleteObjectCommand = new DeleteObjectCommand({
+            Bucket: "program_media",
+            Key: program.image,
+          });
+          await s3Client.send(deleteObjectCommand);
+        }
+  
+        // Upload the new image to storage
+        const key = `program/${file.name}`;
+        const putObjectCommand = new PutObjectCommand({
+          Bucket: "program_media",
+          Key: key,
+          Body: file,
+          ContentType: file.type,
+        });
+        await s3Client.send(putObjectCommand);
+  
+        // Update the program data with the URL or key of the new image
+        editedProgramAsString.image = key;
+      }
+  
+      // Perform the update operation
       await updateProgram.mutateAsync(editedProgramAsString);
+  
+      // Reset the file state
+      setFile(null);
+  
+      // Close the confirmation dialog and update state
       setIsEditing(false);
-      setIsConfirmationOpen(false); // Close the confirmation dialog
-      await refetchProgram(); // Refetch updated data
-      setSnackbarOpen(true); // Show the snackbar on successful update
+      setIsConfirmationOpen(false);
+  
+      // Refetch updated data
+      await refetchProgram();
+  
+      // Show success message
+      setSnackbarOpen(true);
     } catch (error) {
       console.error("Error updating program:", error);
       // Handle error as needed
     }
   };
+  
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -129,7 +220,39 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
     <Grid> 
       <Grid item xs={12}>
         <Typography variant="h5" gutterBottom>
-          <Image src={endpoint + bucket + program.image} alt="program image" width={300} height={200} />
+          {isEditing ? <FormControl fullWidth>
+                    <Typography variant="body2">Program Image</Typography>
+                    <Button
+                      component="label"
+                      variant="contained"
+                      startIcon={<CloudUploadIcon />}
+                    >
+                      Upload file
+                      <VisuallyHiddenInput
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                      />
+                    </Button>
+                    {file && (
+                      <Box mt={2} textAlign="center">
+                        <Image
+                          src={filePreview!}
+                          alt={file.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
+                      </Box>
+                    )}
+                    </FormControl>
+          :  
+          <Image
+          src={endpoint + bucket + program.image}
+          alt="program image"
+          width={500}
+          height={500}
+          style={{ width: '100%', objectFit: 'contain'}}
+        />}
+         
         </Typography>
         <TableContainer>
           <Table>
@@ -171,7 +294,7 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
               </TableRow>
               <TableRow>
                 <TableCell>
-                  <Typography variant="subtitle1">Start Date</Typography>
+                  <Typography variant="subtitle1">Date</Typography>
                 </TableCell>
                 <TableCell>
                   {isEditing ? (
@@ -195,29 +318,44 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
               </TableRow>
               <TableRow>
                 <TableCell>
-                  <Typography variant="subtitle1">End Date</Typography>
+                  <Typography variant="subtitle1">Start Time</Typography>
                 </TableCell>
                 <TableCell>
                   {isEditing ? (
                     <TextField
-                      id="end-date"
-                      type="date"
-                      name="endDate"
-                      value={
-                        editedProgram.endDate
-                          ? editedProgram.endDate.toISOString().split("T")[0]
-                          : ""
-                      }
+                      name="startTime"
+                      value={editedProgram.startTime}
                       onChange={handleInputChange}
+                      type="time"
                     />
                   ) : (
                     <Typography>
-                      {program.endDate
-                        ? formatDate(program.endDate)
-                        : "N/A"}
-                    </Typography>
+                    {formatTimeTo12Hour(program.startTime)}
+                  </Typography>
+            
                   )}
                 </TableCell>
+              </TableRow>
+              <TableRow>
+              <TableCell>
+                  <Typography variant="subtitle1">End Time</Typography>
+                </TableCell>
+                <TableCell>
+                  {isEditing ? (
+                    <TextField
+                      name="endTime"
+                      value={editedProgram.endTime}
+                      onChange={handleInputChange}
+                      type="time"
+                    />
+                  ) : (
+                    <Typography>
+                    {formatTimeTo12Hour(program.endTime)}
+                  </Typography>
+            
+                  )}
+                </TableCell>
+
               </TableRow>
               <TableRow>
                 <TableCell>
@@ -245,6 +383,8 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
                       name="maxVolunteer"
                       value={editedProgram.maxVolunteer}
                       onChange={handleInputChange}
+                      type="number"
+                      InputProps={{ inputProps: { min: 0 } }} // Set minimum value to 0
                     />
                   ) : (
                     <Typography>{program.maxVolunteer}</Typography>
