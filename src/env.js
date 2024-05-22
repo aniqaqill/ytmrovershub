@@ -1,3 +1,4 @@
+
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
@@ -30,6 +31,10 @@ export const env = createEnv({
     ),
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),
+    s3_access_key: z.string(),
+    s3_secret_access: z.string(),
+    s3_endpoint: z.string(),
+    s3_bucket: z.string(),
   },
 
   /**
@@ -39,6 +44,10 @@ export const env = createEnv({
    */
   client: {
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    NEXT_PUBLIC_s3_access_key: z.string(),
+    NEXT_PUBLIC_s3_secret_access: z.string(),
+    NEXT_PUBLIC_s3_endpoint: z.string(),
+    NEXT_PUBLIC_s3_bucket: z.string(),
   },
 
   /**
@@ -52,6 +61,15 @@ export const env = createEnv({
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    s3_access_key: process.env.s3_access_key,
+    s3_secret_access: process.env.s3_secret_access,
+    s3_endpoint: process.env.s3_endpoint,
+    s3_bucket: process.env.s3_bucket,
+    NEXT_PUBLIC_s3_access_key : process.env.NEXT_PUBLIC_s3_access_key,
+    NEXT_PUBLIC_s3_secret_access : process.env.NEXT_PUBLIC_s3_secret_access,
+    NEXT_PUBLIC_s3_endpoint : process.env.NEXT_PUBLIC_s3_endpoint,
+    NEXT_PUBLIC_s3_bucket : process.env.NEXT_PUBLIC_s3_bucket,
+
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
@@ -63,4 +81,6 @@ export const env = createEnv({
    * `SOME_VAR=''` will throw an error.
    */
   emptyStringAsUndefined: true,
+
+
 });

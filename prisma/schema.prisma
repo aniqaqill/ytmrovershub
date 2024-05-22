@@ -34,42 +34,55 @@ model Session {
 }
 
 model User {
-  id            String       @id @default(cuid())
-  name          String?
-  email         String?      @unique
-  image         String?
-  role          String       @default("volunteer")
-  contactNumber String?
-  accounts      Account[]
-  sessions      Session[]
-  programs      Program[]
-  forms         Form[]
+  id                String             @id @default(cuid())
+  name              String?
+  email             String?            @unique
+  image             String?
+  role              String             @default("volunteer")
+  contactNumber     String?
+  accounts          Account[]
+  forms             Form[]
+  programs          Program[]          @relation("CoordinatorPrograms")
+  sessions          Session[]
+  volunteerPrograms VolunteerProgram[]
 }
 
 model Program {
-  id                  String        @id @default(cuid())
-  name                String
-  description         String
-  startDate           DateTime
-  endDate             DateTime
-  location            String
-  maxVolunteer        Int
-  coordinatorId       String
-  aidMaterial         AidMaterial[]
-  form                Form[]
-  user                User           @relation(fields: [coordinatorId], references: [id])
+  id            String             @id @default(cuid())
+  name          String
+  description   String
+  startDate     DateTime
+  startTime     String            
+  endTime       String
+  location      String
+  maxVolunteer  Int
+  coordinatorId String
+  image         String           
+  aidMaterial   AidMaterial[]
+  form          Form[]
+  coordinator   User               @relation("CoordinatorPrograms", fields: [coordinatorId], references: [id])
+  volunteers    VolunteerProgram[]
+}
+
+model VolunteerProgram {
+  userId    String
+  programId String
+  program   Program @relation(fields: [programId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@id([userId, programId])
 }
 
 model Form {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   dateCompleted DateTime
   feedback      String
-  image         String
+  imageURL         String[]
   approved      Boolean
   volunteerId   String
   programId     String
-  program       Program   @relation(fields: [programId], references: [id])
-  user          User      @relation(fields: [volunteerId], references: [id])
+  program       Program  @relation(fields: [programId], references: [id])
+  user          User     @relation(fields: [volunteerId], references: [id])
 }
 
 model AidMaterial {

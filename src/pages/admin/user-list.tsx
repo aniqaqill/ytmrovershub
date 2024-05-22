@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, TextField, MenuItem, Select, FormControl, InputLabel, type SelectChangeEvent } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, TextField, MenuItem, Select, FormControl, InputLabel, type SelectChangeEvent, Snackbar, Alert  } from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
@@ -19,6 +19,7 @@ export default function Page() {
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<User | null>(null); // State to hold form data
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
   const updateUser = api.userInfo.updateUserById.useMutation();
   const getAllUsersQuery = api.userInfo.getAllUser.useQuery();
 
@@ -61,11 +62,18 @@ export default function Page() {
         contactNumber: formData.contactNumber ?? "",
       });
       setOpen(false); // Close the modal after successful update
+      setSnackbarOpen(true); // Show success notification
+
       await getAllUsersQuery.refetch(); // Refetch user list data after successful update
     } catch (error) {
       console.error("Failed to update user", error);
     }
   };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
+
 
 
   //get user list
@@ -171,6 +179,16 @@ export default function Page() {
                 </form>
               </DialogContent>
             </Dialog>
+            <Snackbar
+              open={snackbarOpen}
+              autoHideDuration={6000}
+              onClose={handleCloseSnackbar}
+              >
+                <Alert onClose={handleCloseSnackbar} severity="success">
+                  User updated successfully!
+                </Alert>
+                </Snackbar>
+
           </>
         ) : (
           <Typography variant="body1">You are not authorized to access this page.</Typography>

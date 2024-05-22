@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Typography } from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
@@ -6,13 +6,14 @@ import { useSession } from "next-auth/react";
 export default function Page() {
   const { data: sessionData } = useSession();
 
-  // Check if the user is logged in and has the "volunteer" role
-  const isLoggedInVolunteer = sessionData?.user && sessionData.user.role === "coordinator";
+  const isLoggedInCoordinator = useMemo(() => {
+    return sessionData?.user && sessionData.user.role === "coordinator";
+  }, [sessionData]);
 
   return (
     <div>
       <BaseLayout pageIndex={1}>
-        {isLoggedInVolunteer ? (
+        {isLoggedInCoordinator ? (
           <>
             <Typography variant="h5">Page for coordinator to manage aid material</Typography>
           </>
