@@ -18,7 +18,6 @@ import {
   Alert,
   FormControl,
   Box,
-  
 } from "@mui/material";
 import { api } from "~/utils/api";
 import Image from "next/image";
@@ -43,6 +42,8 @@ interface ProgramType {
   coordinatorId: string;
   image: string;
 }
+
+
 interface ViewDetailProgramProps {
   program: ProgramType;
 }
@@ -143,6 +144,7 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
         ...editedProgram,
         startDate: editedProgram.startDate.toISOString(),
         maxVolunteer: Number(editedProgram.maxVolunteer), // Ensure maxVolunteer is a number
+        materials: []
       };
   
       // Check if a file is selected for upload
@@ -398,8 +400,31 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
                 <TableCell>
                   <Typography>{fullProgramInfo?.coordinator.name}</Typography>
                 </TableCell>
-                
               </TableRow>
+              <TableRow></TableRow>
+                <TableCell>
+                  <Typography variant="subtitle1">Materials</Typography>
+                </TableCell>
+                <TableCell>
+              {fullProgramInfo?.materials && fullProgramInfo.materials.length > 0 ? (
+                <TableContainer>
+                  <Table> 
+                    <TableBody>
+                      {fullProgramInfo.materials.map((material) => (
+                        <TableRow key={material.id}>
+                          <TableCell>
+                            {material.aidMaterial.name} - {material.quantityUsed}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Alert severity="info">No materials used</Alert>
+              )}
+            </TableCell>
+
               {isEditing ? (
                 <TableRow>
                   <TableCell colSpan={2}>
