@@ -37,6 +37,7 @@ model User {
   id                String             @id @default(cuid())
   name              String?
   email             String?            @unique
+  emailVerified     DateTime?
   image             String?
   role              String             @default("volunteer")
   contactNumber     String?
@@ -103,4 +104,11 @@ model ProgramAidMaterial {
   aidMaterial   AidMaterial  @relation(fields: [aidMaterialId], references: [id])
   
   @@unique([programId, aidMaterialId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+  @@unique([identifier, token])
 }

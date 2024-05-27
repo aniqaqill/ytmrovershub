@@ -101,14 +101,12 @@ type BaseLayoutProps = {
     pageIndex: number;
 };
 
-
 const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children }) => {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const { data: sessionData } = useSession();
   const userRole = sessionData?.user?.role;
 
-  
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -119,8 +117,6 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children }) => {
     setAnchorElUser(null);
   };
 
-  
-
   const handleDrawerOpen = () => {
     setOpen(true);
   };
@@ -129,13 +125,11 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children }) => {
     setOpen(false);
   };
 
-  // Define lists based on user roles
   const lists = useMemo(() => [
     {
-      role: undefined, // Default role
+      role: undefined,
       items: [
         { text: 'Home', icon: <HomeIcon />, href: '/' },
-        // { text: 'About', icon: <GridViewIcon />, href: '/about' },
       ],
     },
     {
@@ -162,13 +156,13 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children }) => {
       ],
     }
   ], []);
+
   const currentList = lists.find(list => list.role === userRole);
 
   return (
     <Box sx={{ display: 'flex' }}>
       <AppBar position="fixed" open={open}>
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            {/* Adjust margin-right for space between menu icon and logo */}
             <IconButton
               color="inherit"
               aria-label="open drawer"
@@ -186,12 +180,13 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children }) => {
             {sessionData ? (
             <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                {sessionData?.user?.image && (
+                {/* {sessionData?.user?.image && (
                     <Avatar src={sessionData?.user?.image} />
-                )}
+                )} */}
+                <Avatar>{sessionData?.user?.name?.charAt(0)}</Avatar>
                 </IconButton>
             </Tooltip> ) : (
-            <Button color="inherit" onClick={() => signIn()}>Sign in</Button>
+             <Button color="inherit" onClick={() => signIn(undefined, { callbackUrl: '/index' })}>Sign in</Button>
             )}
                 <Menu
                     sx={{ mt: '45px' }}
@@ -209,11 +204,9 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children }) => {
                     open={Boolean(anchorElUser)}
                     onClose={handleCloseUserMenu}
                 >
-                    {/* Profile option */}
                     <MenuItem onClick={() => router.push('/profile')}>
                     <Typography textAlign="center">Profile</Typography>
                     </MenuItem>
-                    {/* Sign out option */}
                     <MenuItem onClick={() => signOut()}>
                     <Typography textAlign="center">Sign out</Typography>
                     </MenuItem>
@@ -228,40 +221,37 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children }) => {
           </IconButton>
         </DrawerHeader>
         <Divider />
-
-        {/* Render list items based on user role */}
         <List>
-  {currentList?.items.map((item) => (
-    <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
-      <ListItemButton
-        sx={{
-          minHeight: 48,
-          justifyContent: open ? 'initial' : 'center',
-          px: 2.5,
-        }}
-        href={item.href}
-      >
-        <ListItemIcon
-          sx={{
-            minWidth: 0,
-            mr: open ? 3 : 'auto',
-            justifyContent: 'center',
-          }}
-        >
-          {item.icon}
-        </ListItemIcon>
-        <ListItemText primary={item.text} sx={{ opacity: open ? 1 : 0 }} />
-      </ListItemButton>
-    </ListItem>
-  ))}
-</List>
+          {currentList?.items.map((item) => (
+            <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
+              <ListItemButton
+                sx={{
+                  minHeight: 48,
+                  justifyContent: open ? 'initial' : 'center',
+                  px: 2.5,
+                }}
+                href={item.href}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: open ? 3 : 'auto',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary={item.text} sx={{ opacity: open ? 1 : 0 }} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 1 }}>
         <DrawerHeader />
         {children}
       </Box>
-      </Box>
-
+    </Box>
   );
 }
 

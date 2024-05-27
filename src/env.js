@@ -35,6 +35,11 @@ export const env = createEnv({
     s3_secret_access: z.string(),
     s3_endpoint: z.string(),
     s3_bucket: z.string(),
+    EMAIL_SERVER_USER : z.string(),
+    EMAIL_SERVER_PASSWORD : z.string(),
+    EMAIL_SERVER_HOST : z.string(),
+    EMAIL_SERVER_PORT : z.number(),
+    EMAIL_FROM : z.string(),
   },
 
   /**
@@ -69,7 +74,11 @@ export const env = createEnv({
     NEXT_PUBLIC_s3_secret_access : process.env.NEXT_PUBLIC_s3_secret_access,
     NEXT_PUBLIC_s3_endpoint : process.env.NEXT_PUBLIC_s3_endpoint,
     NEXT_PUBLIC_s3_bucket : process.env.NEXT_PUBLIC_s3_bucket,
-
+    EMAIL_SERVER_USER : process.env.EMAIL_SERVER_USER,
+    EMAIL_SERVER_PASSWORD : process.env.EMAIL_SERVER_PASSWORD,
+    EMAIL_SERVER_HOST : process.env.EMAIL_SERVER_HOST,
+    EMAIL_SERVER_PORT : Number(process.env.EMAIL_SERVER_PORT),
+    EMAIL_FROM : process.env.EMAIL_FROM,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
