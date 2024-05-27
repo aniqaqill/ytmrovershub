@@ -136,10 +136,10 @@ export default function Page() {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Program Name</TableCell>
-                    <TableCell>Location</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Actions</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Program Name</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

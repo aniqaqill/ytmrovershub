@@ -13,7 +13,11 @@ const ProgramInput = z.object({
   location: z.string(),
   maxVolunteer: z.number(),
   coordinatorId: z.string(),
-  image: z.string()
+  image: z.string(),
+  materials: z.array(z.object({
+    id: z.string(),
+    quantity: z.number(),
+  }))
 });
 
 const RegisterInput = z.object({
@@ -25,9 +29,9 @@ export const programInfoRouter = createTRPCRouter({
   getAllProgram: protectedProcedure.query(async () => {
     const programs = await prisma.program.findMany({
       include: {
-        coordinator: true, // Include coordinator information
-        form: true, // Include associated forms
-        aidMaterial: true // Include associated aid materials
+        coordinator: true,
+        form: true,
+        materials : true
       }
     });
     return programs;
@@ -39,30 +43,58 @@ export const programInfoRouter = createTRPCRouter({
       const program = await prisma.program.findUnique({
         where: { id: input.id },
         include: {
-          coordinator: true, // Include coordinator information
-          aidMaterial: true // Include associated aid materials
+          coordinator: true,
+          materials: {
+            include: {
+              aidMaterial: true
+            }
+          }
         }
       });
       return program;
     }),
 
   createProgram: protectedProcedure.input(ProgramInput).mutation(async ({ input }) => {
-    const program = await prisma.program.create({
-      data: {
-        name: input.name,
-        description: input.description,
-        startDate: new Date(input.startDate),
-        startTime: input.startTime,
-        endTime: input.endTime,
-        location: input.location,
-        maxVolunteer: input.maxVolunteer,
-        coordinatorId: input.coordinatorId, // Connect program with coordinator
-        image : input.image 
-    },
-      include: {
-        coordinator: true, // Include coordinator information
+    // Start a transaction to ensure atomicity
+    const program = await prisma.$transaction(async (prisma) => {
+      const createdProgram = await prisma.program.create({
+        data: {
+          name: input.name,
+          description: input.description,
+          startDate: new Date(input.startDate),
+          startTime: input.startTime,
+          endTime: input.endTime,
+          location: input.location,
+          maxVolunteer: input.maxVolunteer,
+          coordinatorId: input.coordinatorId,
+          image: input.image,
+        }
+      });
+
+      for (const material of input.materials) {
+        // Update the aid material quantity
+        await prisma.aidMaterial.update({
+          where: { id: material.id },
+          data: {
+            quantity: {
+              decrement: material.quantity
+            }
+          }
+        });
+
+        // Create the ProgramAidMaterial relationship
+        await prisma.programAidMaterial.create({
+          data: {
+            programId: createdProgram.id,
+            aidMaterialId: material.id,
+            quantityUsed: material.quantity
+          }
+        });
       }
+
+      return createdProgram;
     });
+
     return program;
   }),
 
@@ -72,33 +104,64 @@ export const programInfoRouter = createTRPCRouter({
       name: z.string(),
       description: z.string(),
       startDate: z.string(),
-      startTime  : z.string(),
+      startTime: z.string(),
       endTime: z.string(),
       coordinatorId: z.string(),
       location: z.string(),
       maxVolunteer: z.number(),
       image: z.string(),
+      materials: z.array(z.object({
+        id: z.string(),
+        quantity: z.number(),
+      }))
     }))
     .mutation(async ({ input }) => {
-      const program = await prisma.program.update({
-        where: { id: input.id },
-        data: {
-          name: input.name,
-          description: input.description,
-          startDate: new Date(input.startDate),
-          startTime: input.startTime,
-          endTime: input.endTime,
-          coordinatorId: input.coordinatorId,
-          location: input.location,
-          maxVolunteer: input.maxVolunteer,
-          image: input.image
-        },
-        include: {
-          coordinator: true, // Include coordinator information
-          form: true, // Include associated forms
-          aidMaterial: true // Include associated aid materials
+      // Start a transaction to ensure atomicity
+      const program = await prisma.$transaction(async (prisma) => {
+        const updatedProgram = await prisma.program.update({
+          where: { id: input.id },
+          data: {
+            name: input.name,
+            description: input.description,
+            startDate: new Date(input.startDate),
+            startTime: input.startTime,
+            endTime: input.endTime,
+            coordinatorId: input.coordinatorId,
+            location: input.location,
+            maxVolunteer: input.maxVolunteer,
+            image: input.image,
+          }
+        });
+
+        // First, remove existing material relationships
+        await prisma.programAidMaterial.deleteMany({
+          where: { programId: input.id }
+        });
+
+        for (const material of input.materials) {
+          // Update the aid material quantity
+          await prisma.aidMaterial.update({
+            where: { id: material.id },
+            data: {
+              quantity: {
+                decrement: material.quantity
+              }
+            }
+          });
+
+          // Create the new ProgramAidMaterial relationship
+          await prisma.programAidMaterial.create({
+            data: {
+              programId: updatedProgram.id,
+              aidMaterialId: material.id,
+              quantityUsed: material.quantity
+            }
+          });
         }
+
+        return updatedProgram;
       });
+
       return program;
     }),
 

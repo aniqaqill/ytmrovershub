@@ -143,7 +143,7 @@ const BaseLayoutDrawer: React.FC<BaseLayoutProps> = ({ children }) => {
       items: [
         { text: 'Home', icon: <HomeIcon />, href: '/' },
         { text: 'Manage Program', icon: <AllInboxIcon />, href: '/coordinator/manage-program' },
-        { text: 'Aid Material', icon: <AppRegistrationIcon />, href: '/coordinator/aid-material' },
+        { text: 'Aid Material', icon: <AppRegistrationIcon />, href: '/coordinator/manage-material' },
       ],
     },
     {
