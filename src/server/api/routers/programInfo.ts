@@ -31,7 +31,8 @@ export const programInfoRouter = createTRPCRouter({
       include: {
         coordinator: true,
         form: true,
-        materials : true
+        materials: true,
+        volunteers: true // Include volunteers to count the number of registered volunteers
       }
     });
     return programs;
@@ -48,7 +49,8 @@ export const programInfoRouter = createTRPCRouter({
             include: {
               aidMaterial: true
             }
-          }
+          },
+          volunteers: true // Include volunteers to count the number of registered volunteers
         }
       });
       return program;
@@ -206,5 +208,14 @@ export const programInfoRouter = createTRPCRouter({
 
       const volunteerPrograms = userWithPrograms.volunteerPrograms.map(vp => vp.program);
       return volunteerPrograms;
+    }),
+
+  countVolunteers: protectedProcedure
+    .input(z.object({ programId: z.string() }))
+    .query(async ({ input }) => {
+      const count = await prisma.volunteerProgram.count({
+        where: { programId: input.programId }
+      });
+      return { count };
     }),
 });
