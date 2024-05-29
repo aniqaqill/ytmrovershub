@@ -7,6 +7,8 @@ import React from "react";
 
 import { api } from "~/utils/api";
 
+
+
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
   pageProps: { session, ...pageProps },

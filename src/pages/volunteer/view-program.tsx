@@ -151,7 +151,7 @@ export default function Page() {
                                   image={endpoint + bucket + program.image}
                                   alt="program image"
                                 />
-                                {daysLeft < 7 && (
+                                { !isFull && daysLeft < 7 && (
                                   <Alert
                                     severity="warning"
                                     sx={{
@@ -174,13 +174,13 @@ export default function Page() {
                                       position: 'absolute',
                                       top: 0,
                                       right: 0,
-                                      width: 'auto',
+                                      width: '100%',
                                       boxSizing: 'border-box',
                                       borderRadius: 0,
                                       opacity: 0.8,
                                     }}
                                   >
-                                    Full
+                                    The program has reach its maximum number of volunteers
                                   </Alert>
                                 )}
                               </Box>
