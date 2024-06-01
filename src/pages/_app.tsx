@@ -2,9 +2,9 @@ import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { type AppType } from "next/app";
 import React from "react";
-// import { ThemeProvider } from "@mui/material";
-// import { themeOptions } from '../styles/theme';
-
+import { ThemeProvider } from "@mui/material";
+import theme from "~/styles/theme"
+import CssBaseline from "@mui/material/CssBaseline";
 import { api } from "~/utils/api";
 
 
@@ -15,9 +15,10 @@ const MyApp: AppType<{ session: Session | null }> = ({
 }) => {
   return (
     <SessionProvider session={session}>
-      {/* <ThemeProvider theme={themeOptions}> */}
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
         <Component {...pageProps} />
-      {/* </ThemeProvider> */}
+      </ThemeProvider>
     </SessionProvider>
   );
 };

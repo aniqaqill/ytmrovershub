@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Alert, Button } from "@mui/material";
+import { Accordion, AccordionSummary, AccordionDetails, Typography, Alert, Button } from "@mui/material";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
@@ -20,10 +21,9 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const getRegisteredPrograms = api.programInfo.getVolunteerPrograms.useQuery({ volunteerId: sessionData?.user?.id ?? "" });
+  
   // Check if the user is logged in and has the "volunteer" role
   const isLoggedInVolunteer = sessionData?.user && sessionData.user.role === "volunteer";
-
-
 
   useEffect(() => {
     if (isLoggedInVolunteer) {
@@ -72,38 +72,26 @@ export default function Page() {
             ) : registeredPrograms.length === 0 ? (
               <Alert severity="info">You are not registered in any programs.</Alert>
             ) : (
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Program Name</TableCell>
-                      <TableCell>Description</TableCell>
-                      <TableCell>Date</TableCell>
-                      <TableCell>Time</TableCell>
-                      <TableCell>Location</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {registeredPrograms.map((program) => (
-                      <TableRow key={program.id}>
-                        <TableCell>{program.name}</TableCell>
-                        <TableCell>{program.description}</TableCell>
-                        <TableCell>{formatDate(program.startDate)}</TableCell>
-                        <TableCell>
-                          {formatTimeTo12Hour(program.startTime)} - {formatTimeTo12Hour(program.endTime)}
-                        </TableCell>
-                        <TableCell>{program.location}</TableCell>
-                        <TableCell>
-                          <Button variant="contained" color="primary">
-                            Form
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              registeredPrograms.map((program) => (
+                <Accordion key={program.id}>
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="panel1a-content"
+                    id="panel1a-header"
+                  >
+                    <Typography>{program.name}</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Typography>Date: {formatDate(program.startDate)}</Typography>
+                    <Typography>Time: {formatTimeTo12Hour(program.startTime)} - {formatTimeTo12Hour(program.endTime)}</Typography>
+                    <Typography>Location: {program.location}</Typography>
+                    <Typography>{program.description}</Typography>
+                    <Button variant="contained" color="primary" style={{ marginTop: '10px' }}>
+                      Form
+                    </Button>
+                  </AccordionDetails>
+                </Accordion>
+              ))
             )}
           </>
         ) : (

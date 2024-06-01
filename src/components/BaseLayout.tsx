@@ -7,17 +7,15 @@ import MenuIcon from "@mui/icons-material/Menu";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
-import { styled, useTheme, type Theme, type CSSObject } from "@mui/material/styles";
-import MuiDrawer from "@mui/material/Drawer";
+import { styled} from "@mui/material/styles";
 import MuiAppBar, { type AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
 import Divider from "@mui/material/Divider";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import HomeIcon from "@mui/icons-material/Home";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { Avatar, Button, Menu, MenuItem, Tooltip } from "@mui/material";
+import { Avatar, Button,  Menu, MenuItem, Tooltip,Drawer, Container } from "@mui/material";
 import AppRegistrationIcon from "@mui/icons-material/AppRegistration";
 import GridViewIcon from "@mui/icons-material/GridView";
 import AllInboxIcon from "@mui/icons-material/AllInbox";
@@ -28,32 +26,11 @@ import { useRouter } from "next/router";
 
 const drawerWidth = 240;
 
-const openedMixin = (theme: Theme): CSSObject => ({
-  width: drawerWidth,
-  transition: theme.transitions.create("width", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.enteringScreen,
-  }),
-  overflowX: "hidden",
-});
-
-const closedMixin = (theme: Theme): CSSObject => ({
-  transition: theme.transitions.create("width", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  overflowX: "hidden",
-  width: `calc(${theme.spacing(7)} + 1px)`,
-  [theme.breakpoints.up("sm")]: {
-    width: `calc(${theme.spacing(8)} + 1px)`,
-  },
-});
 
 const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "flex-end",
-  padding: theme.spacing(0, 1),
   ...theme.mixins.toolbar,
 }));
 
@@ -65,13 +42,16 @@ const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })<AppBarProps>(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
+  position: 'fixed',
   transition: theme.transitions.create(['width', 'margin'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
   ...(open && {
     marginLeft: drawerWidth,
-    width: `calc(100% - ${drawerWidth}px)`,
+    zIndex: theme.zIndex.drawer + 1,
+    position: 'fixed',
+    // width: `calc(100% - ${drawerWidth}px)`,
     transition: theme.transitions.create(['width', 'margin'], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
@@ -79,30 +59,12 @@ const AppBar = styled(MuiAppBar, {
   }),
 }));
 
-const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
-  ({ theme, open }) => ({
-    width: drawerWidth,
-    flexShrink: 0,
-    whiteSpace: 'nowrap',
-    boxSizing: 'border-box',
-    ...(open && {
-      ...openedMixin(theme),
-      '& .MuiDrawer-paper': openedMixin(theme),
-    }),
-    ...(!open && {
-      ...closedMixin(theme),
-      '& .MuiDrawer-paper': closedMixin(theme),
-    }),
-  }),
-);
-
 type BaseLayoutProps = {
   children: React.ReactNode;
   pageIndex?: number;
 };
 
 const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
-  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const { data: sessionData } = useSession();
   const router = useRouter();
@@ -160,22 +122,19 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
 
   return (
     <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed" open={open}>
+      <AppBar position="fixed" open={open} >
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          {sessionData && (
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              onClick={handleDrawerOpen}
-              edge="start"
-              sx={{
-                marginRight: 2,
-                ...(open && { display: 'none' }),
-              }}
-            >
-              <MenuIcon />
-            </IconButton>
-          )}
+        {sessionData && (
+          <IconButton
+            color="inherit"
+            aria-label={open ? "close drawer" : "open drawer"}
+            onClick={open ? handleDrawerClose : handleDrawerOpen} 
+            edge="start"
+            sx={{ marginRight: 2 }}
+          >
+            {open ? <ChevronLeftIcon /> : <MenuIcon />} 
+          </IconButton>
+        )}
           <Image src={logo} alt="logo" width={150} height={50} />
           <Box sx={{ flexGrow: 0 }}>
             {sessionData ? (
@@ -216,11 +175,15 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
         </Toolbar>
       </AppBar>
       {sessionData && (
-        <Drawer variant="permanent" open={open}>
+        <Drawer 
+          variant="persistent"
+          open={open}
+
+        >
           <DrawerHeader>
-            <IconButton onClick={handleDrawerClose}>
-              {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-            </IconButton>
+            <Typography variant="h6">Menu</Typography>
+
+
           </DrawerHeader>
           <Divider />
           <List>
@@ -250,10 +213,10 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
           </List>
         </Drawer>
       )}
-      <Box component="main" sx={{ flexGrow: 1, p: 1 }}>
+      <Container component="main" sx={{ flexGrow: 1, p: 1 }} maxWidth="lg">
         <DrawerHeader />
         {children}
-      </Box>
+      </Container>
     </Box>
   );
 };

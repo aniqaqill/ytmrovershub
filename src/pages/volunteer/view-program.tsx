@@ -11,6 +11,8 @@ import {
   Modal,
   Box,
   Snackbar,
+  Backdrop,
+  CircularProgress,
 } from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
@@ -126,7 +128,9 @@ export default function Page() {
             <Typography variant="h5" gutterBottom>Programs</Typography>
             <Divider />
             {getAllProgramsQuery.isLoading ? (
-              <Typography variant="body1">Loading...</Typography>
+              <Backdrop open>
+                  <CircularProgress />
+              </Backdrop>
             ) : getAllProgramsQuery.error ? (
               <Alert severity="error">Error fetching programs. Please try again later.</Alert>
             ) : (

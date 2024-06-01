@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar, Table, TableBody, TableCell, TableHead, TableRow, Typography, CircularProgress, Tooltip, Divider, Box } from "@mui/material";
+import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar, Table, TableBody, TableCell, TableHead, TableRow, Typography, CircularProgress, Tooltip, Divider, Box, Backdrop } from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
@@ -116,8 +116,11 @@ export default function Page() {
             <Button variant="contained">Create New Aid Material</Button>
           </Link>
           <br />
+          <br />
           {isLoading ? (
-            <CircularProgress />
+            <Backdrop open>
+              <CircularProgress />
+            </Backdrop>
           ) : isError ? (
             <Typography variant="body1">An error occurred while fetching data.</Typography>
           ) : (
@@ -141,7 +144,7 @@ export default function Page() {
                               alt={material.name}
                               width={50}
                               height={50}
-                              style={{ marginRight: '10px' }} // Add some space between the image and the name
+                              style={{ marginRight: '10px' }} 
                             />
                           )}
                           <Typography variant="body1" align="center">

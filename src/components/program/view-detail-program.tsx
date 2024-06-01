@@ -124,7 +124,7 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
   const handleCloseConfirmation = async () => {
     
     setIsConfirmationOpen(false);
-    await refetchProgram(); // Refetch the program data to reset the changes
+    await refetchProgram(); 
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -220,7 +220,7 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
 
   return (
     <Grid> 
-      <Grid item xs={12}>
+      <Grid item xs={12} >
         <Typography variant="h5" gutterBottom>
           {isEditing ? <FormControl fullWidth>
                     <Typography variant="body2">Program Image</Typography>
@@ -254,7 +254,6 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
           height={500}
           style={{ width: '100%', objectFit: 'contain'}}
         />}
-         
         </Typography>
         <TableContainer>
           <Table>
@@ -448,9 +447,9 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
       </Grid>
 
       {/* Confirmation dialog for saving changes */}
-      <Dialog open={isConfirmationOpen} onClose={handleCloseConfirmation}>
+      <Dialog fullWidth={true} maxWidth="md"  open={isConfirmationOpen} onClose={handleCloseConfirmation}>
         <DialogTitle>Confirm Update</DialogTitle>
-        <DialogContent sx={{ minWidth: "50%" }}>
+        <DialogContent>
           <DialogContentText>
             Are you sure you want to update this program?
           </DialogContentText>

@@ -5,7 +5,7 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
-import { Typography, Link, Card } from '@mui/material';
+import { Typography, Link, Card, useTheme } from '@mui/material';
 import Image from "next/image";
 import logo from '../../../public/logo.png';
 
@@ -30,6 +30,7 @@ const SignIn: React.FC = () => {
   const { data: session } = useSession();
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const theme = useTheme();
 
   useEffect(() => {
     if (session) {
@@ -41,9 +42,6 @@ const SignIn: React.FC = () => {
     await signIn("email", { email, callbackUrl: "/" });
   };
 
-  const handleGoogleSignIn = async () => {
-    await signIn("google", { callbackUrl: "/" });
-  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -54,20 +52,20 @@ const SignIn: React.FC = () => {
   };
 
   return (
-    <Grid container justifyContent="center" alignItems="center" sx={{ height: '100vh' }}>
+    <Grid container justifyContent="center" alignItems="center" sx={{ height: '80vh' }}>
       <Grid item>
-        <Card sx={{ bgcolor: '#F07201', padding: '20px', borderRadius: '30px', boxShadow: 5 }}>
+        <Card sx={{ padding: '30px', borderRadius: '30px', boxShadow: 5, backgroundColor: theme.palette.primary.main }}>
           <Grid item>
             <Image src={logo} alt="logo" width={300} height={100} />
           </Grid>
-          <Typography component="h1" variant="h5" sx={{ mt: 1 }} color={"whitesmoke"}>
+          <Typography component="h1"  color={theme.palette.primary.contrastText}>
             Sign in to your account
           </Typography>
           <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1 }}>
             <TextField
               variant="outlined"
-              margin="normal"
-              required // Added required attribute here
+
+              required
               fullWidth
               id="email"
               placeholder="Email Address"
@@ -83,20 +81,12 @@ const SignIn: React.FC = () => {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              color="primary"
+              color="secondary"
             >
               Sign In
             </Button>
-            <Button
-              fullWidth
-              variant="contained"
-              sx={{ mt: 1, mb: 2 }}
-              onClick={handleGoogleSignIn}
-            >
-              Sign in with Google
-            </Button>
           </Box>
-          <Box mt={5}>
+          <Box mt={3}>
             <Copyright website="ytmrovershub" />
           </Box>
         </Card>
