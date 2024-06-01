@@ -78,12 +78,20 @@ model Form {
   id            String   @id @default(cuid())
   dateCompleted DateTime
   feedback      String
-  imageURL      String[]
-  approved      Boolean
+  images        String[]
+  status        FormStatus @default(SUBMITTED)
   volunteerId   String
   programId     String
   program       Program  @relation(fields: [programId], references: [id])
   user          User     @relation(fields: [volunteerId], references: [id])
+
+  @@unique([volunteerId, programId])
+}
+
+enum FormStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
 }
 
 model AidMaterial {

@@ -8,6 +8,7 @@ import { db } from "~/server/db";
 import EmailProvider from "next-auth/providers/email";
 
 
+
 type UserRole = "volunteer" | "coordinator" | "admin";
 
 declare module "next-auth" {
@@ -52,12 +53,12 @@ export const authOptions: NextAuthOptions = {
         }
       },
       from: env.EMAIL_FROM,
-    
     }),
   ],
   pages: {
     signIn: '/authentication/signIn',
     verifyRequest: '/authentication/verifyRequest',
+    
   },
 };
 

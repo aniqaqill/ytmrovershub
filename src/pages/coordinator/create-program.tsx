@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Typography, Divider, Box, FormControl, Button, TextField,
-  Grid, Snackbar, Alert, InputLabel
+  Grid, Snackbar, Alert,
 } from "@mui/material";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -301,19 +301,19 @@ export default function CreateProgram() {
                 </FormControl>
               </Grid>
               <Grid item xs={12}>
-                <FormControl fullWidth>
                   <Typography variant="body2">Aid Materials</Typography>
                   {availableMaterials.map((material) => (
-                    <Box key={material.id} mb={2}>
-                      <InputLabel>{material.name} (Available: {material.quantity})</InputLabel>
+                    <FormControl fullWidth key={material.id} >
+                      <Typography>{material.name} (Available: {material.quantity})</Typography>
                       <TextField
                         type="number"
                         inputProps={{ min: 0, max: material.quantity }}
                         onChange={(e) => handleMaterialChange(material.id, Number(e.target.value))}
+                        fullWidth
                       />
-                    </Box>
+                    </FormControl>
                   ))}
-                </FormControl>
+
               </Grid>
               <Grid item xs={12}>
                 <Button type="submit" variant="contained">Create Program</Button>

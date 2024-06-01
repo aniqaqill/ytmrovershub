@@ -2,7 +2,9 @@ import React, { useMemo, useEffect, useState } from "react";
 import {
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
   Divider, Table, TableBody, TableCell, TableHead, TableRow,
-  Typography, CircularProgress, Tooltip, Snackbar, Alert
+  Typography, CircularProgress, Tooltip, Snackbar, Alert,
+  Stack,
+  Backdrop
 } from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
@@ -128,8 +130,11 @@ export default function Page() {
               <Button variant="contained"> Create New Program </Button>
             </Link>
             <br />
+            <br />  
             {isLoading ? (
-              <CircularProgress />
+               <Backdrop open>
+                <CircularProgress />
+              </Backdrop>
             ) : isError ? (
               <Typography variant="body1">Error fetching programs. Please try again later.</Typography>
             ) : (
@@ -178,15 +183,19 @@ export default function Page() {
       </BaseLayout>
 
       {/* Render the ViewDetailProgram component inside a dialog */}
-      <Dialog open={!!selectedProgram} onClose={handleCloseModal}>
-        <DialogTitle>View Program Details</DialogTitle>
+      <Dialog fullWidth={true} maxWidth="md" open={!!selectedProgram} onClose={handleCloseModal}>
+        <DialogTitle><Stack direction="row" justifyContent="space-between">
+          <Typography variant="h5">{selectedProgram?.name}&apos;s Program</Typography>
+          <Button onClick={handleCloseModal}>Close</Button>
+        </Stack>
+        </DialogTitle>
         <DialogContent>
           {selectedProgram && <ViewDetailProgram program={selectedProgram} />}
         </DialogContent>
       </Dialog>
 
       {/* Confirmation dialog for deleting a program */}
-      <Dialog open={isConfirmationOpen} onClose={handleCancelDelete}>
+      <Dialog fullWidth={true} maxWidth="md" open={isConfirmationOpen} onClose={handleCancelDelete}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <Typography>Are you sure you want to delete this program?</Typography>

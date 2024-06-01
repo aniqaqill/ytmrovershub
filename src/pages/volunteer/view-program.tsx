@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   Typography,
@@ -10,6 +10,9 @@ import {
   Button,
   Modal,
   Box,
+  Snackbar,
+  Backdrop,
+  CircularProgress,
 } from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
@@ -29,6 +32,7 @@ interface ProgramType {
   maxVolunteer: number;
   coordinatorId: string;
   image: string;
+  volunteers: { userId: string; programId: string }[]; // Adjusted structure
 }
 
 export default function Page() {
@@ -37,6 +41,21 @@ export default function Page() {
   const [selectedProgram, setSelectedProgram] = useState<ProgramType | null>(null);
   const { data: fullProgramInfo } = api.programInfo.getProgramById.useQuery({ id: selectedProgram?.id ?? "" });
   const isLoggedInVolunteer = sessionData?.user && sessionData.user.role === "volunteer";
+  const [volunteerCount, setVolunteerCount] = useState<number>(0);
+  const registerVolunteer = api.programInfo.registerVolunteer.useMutation();
+  const [isRegistered, setIsRegistered] = useState<boolean>(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isFull, setIsFull] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (selectedProgram) {
+      const count = selectedProgram.volunteers.length;
+      setVolunteerCount(count);
+      const userId = sessionData?.user?.id;
+      setIsRegistered(selectedProgram.volunteers.some(v => v.userId === userId));
+      setIsFull(count >= selectedProgram.maxVolunteer);
+    }
+  }, [selectedProgram, sessionData]);
 
   const formatDate = (dateString: Date) => {
     const date = new Date(dateString);
@@ -81,6 +100,26 @@ export default function Page() {
     return daysDifference;
   };
 
+  const handleRegister = async (programId: string) => {
+    const volunteerId = sessionData?.user?.id;
+    if (!volunteerId) {
+      return;
+    }
+
+    try {
+      await registerVolunteer.mutateAsync({ programId, volunteerId });
+      setVolunteerCount((prevCount) => prevCount + 1); // Increment the volunteer count locally
+      setIsRegistered(true);
+      setSuccessMessage("Successfully registered for the program!");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleSnackbarClose = () => {
+    setSuccessMessage(null);
+  };
+
   return (
     <div>
       <BaseLayout pageIndex={1}>
@@ -89,7 +128,9 @@ export default function Page() {
             <Typography variant="h5" gutterBottom>Programs</Typography>
             <Divider />
             {getAllProgramsQuery.isLoading ? (
-              <Typography variant="body1">Loading...</Typography>
+              <Backdrop open>
+                  <CircularProgress />
+              </Backdrop>
             ) : getAllProgramsQuery.error ? (
               <Alert severity="error">Error fetching programs. Please try again later.</Alert>
             ) : (
@@ -102,45 +143,62 @@ export default function Page() {
                       ?.filter(isProgramInFuture)
                       .map((program) => {
                         const daysLeft = getDaysLeft(program);
-                        return (
-<Grid item xs={12} sm={6} md={4} key={program.id}>
-  <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-    <Box sx={{ position: 'relative' }}>
-      <CardMedia
-        component="img"
-        height="200"
-        image={endpoint + bucket + program.image}
-        alt="program image"
-      />
-      {daysLeft < 7 && (
-        <Alert
-          severity="warning"
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            boxSizing: 'border-box',
-            borderRadius: 0,
-            opacity: 0.8,
-          }}
-        >
-          {daysLeft} {daysLeft === 1 ? "day" : "days"} left to register for the program
-        </Alert>
-      )}
-    </Box>
-    <CardContent>
-      <Typography variant="h6" gutterBottom>{program.name}</Typography>
-      <Typography variant="body1">Date: {program.startDate ? formatDate(program.startDate) : "N/A"}</Typography>
-      <Typography variant="body1">Time: {formatTimeTo12Hour(program.startTime)} - {formatTimeTo12Hour(program.endTime)}</Typography>
-      <Typography variant="body1">Location: {program.location}</Typography>
-    </CardContent>
-    <Box mt="auto" p={2}>
-      <Button variant="contained" onClick={() => handleViewMore(program)}>View More</Button>
-    </Box>
-  </Card>
-</Grid>
+                        const isFull = program.volunteers.length >= program.maxVolunteer;
 
+                        return (
+                          <Grid item xs={12} sm={6} md={4} key={program.id}>
+                            <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                              <Box sx={{ position: 'relative' }}>
+                                <CardMedia
+                                  component="img"
+                                  height="200"
+                                  image={endpoint + bucket + program.image}
+                                  alt="program image"
+                                />
+                                { !isFull && daysLeft < 7 && (
+                                  <Alert
+                                    severity="warning"
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 0,
+                                      left: 0,
+                                      width: '100%',
+                                      boxSizing: 'border-box',
+                                      borderRadius: 0,
+                                      opacity: 0.8,
+                                    }}
+                                  >
+                                    {daysLeft} {daysLeft === 1 ? "day" : "days"} left to register for the program
+                                  </Alert>
+                                )}
+                                {isFull && (
+                                  <Alert
+                                    severity="error"
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 0,
+                                      right: 0,
+                                      width: '100%',
+                                      boxSizing: 'border-box',
+                                      borderRadius: 0,
+                                      opacity: 0.8,
+                                    }}
+                                  >
+                                    The program has reach its maximum number of volunteers
+                                  </Alert>
+                                )}
+                              </Box>
+                              <CardContent>
+                                <Typography variant="h6" gutterBottom>{program.name}</Typography>
+                                <Typography variant="body1">Date: {program.startDate ? formatDate(program.startDate) : "N/A"}</Typography>
+                                <Typography variant="body1">Time: {formatTimeTo12Hour(program.startTime)} - {formatTimeTo12Hour(program.endTime)}</Typography>
+                                <Typography variant="body1">Location: {program.location}</Typography>
+                              </CardContent>
+                              <Box mt="auto" p={2}>
+                                <Button variant="contained" onClick={() => handleViewMore(program)}>View More</Button>
+                              </Box>
+                            </Card>
+                          </Grid>
                         );
                       })}
                   </Grid>
@@ -181,17 +239,31 @@ export default function Page() {
             <Typography variant="body1" gutterBottom>For any enquiries: {fullProgramInfo?.coordinator.email}</Typography>
             <Divider />
             <br />
-            <Grid container spacing={2} justifyContent="space-between">
-              <Grid item>
-                <Button variant="contained" color="primary">Register</Button>
-              </Grid>
-              <Grid item>
-                <Button variant="contained" onClick={handleCloseModal} color="error">Close</Button>
-              </Grid>
-            </Grid>
-            </CardContent>
-          </Card>
+            <Typography variant="body1">Registered Volunteers: {volunteerCount}</Typography>
+            
+            {isFull ? (
+              <Alert severity="error">This program is full and cannot accept more volunteers.</Alert>
+            ) : (
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={isRegistered}
+                onClick={() => handleRegister(selectedProgram!.id)}
+              >
+                {isRegistered ? "Registered" : "Register"}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       </Modal>
+
+      {/* Snackbar for success message */}
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        message={successMessage}
+      />
     </div>
   );
 }
