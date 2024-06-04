@@ -194,7 +194,7 @@ const EditMaterial: React.FC<EditMaterialProps> = ({ material,onClose }) => {
         <Grid item xs={12}>
           <Grid container justifyContent="space-between" spacing={2}>
             <Grid item>
-              <Button type="submit" variant="contained">Update Material</Button>
+              <Button type="submit" color="secondary" variant="contained">Update Material</Button>
             </Grid>
             <Grid item>
               <Button onClick={onClose} variant="contained" color="error">Cancel</Button>

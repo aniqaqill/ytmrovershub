@@ -427,7 +427,7 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
               {isEditing ? (
                 <TableRow>
                   <TableCell colSpan={2}>
-                    <Button variant="contained" onClick={handleOpenConfirmation}>
+                    <Button color="secondary" variant="contained" onClick={handleOpenConfirmation}>
                       Save
                     </Button>
                   </TableCell>
@@ -435,7 +435,7 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
               ) : (
                 <TableRow>
                   <TableCell colSpan={2}>
-                    <Button variant="contained" onClick={handleEditClick}>
+                    <Button fullWidth variant="contained" color="secondary" onClick={handleEditClick}>
                       Edit
                     </Button>
                   </TableCell>

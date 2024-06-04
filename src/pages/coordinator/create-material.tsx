@@ -173,12 +173,13 @@ export default function CreateMaterial() {
                 </FormControl>
               </Grid>
               <Grid item xs={12}>
-                <FormControl fullWidth>
+                <FormControl >
                   <Typography variant="body2">Material Image</Typography>
                   <Button
                     component="label"
-                    variant="contained"
+                    
                     startIcon={<CloudUploadIcon />}
+                    color="secondary"
                   >
                     Upload file
                     <VisuallyHiddenInput
@@ -201,7 +202,7 @@ export default function CreateMaterial() {
                 </FormControl>
               </Grid>
               <Grid item xs={12}>
-                <Button type="submit" variant="contained">Create Material</Button>
+                <Button color="secondary" type="submit" variant="contained">Create Material</Button>
               </Grid>
             </Grid>
           </Box>

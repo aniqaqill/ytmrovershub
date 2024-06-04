@@ -113,7 +113,7 @@ export default function Page() {
           <Divider />
           <br />
           <Link href="/coordinator/create-material">
-            <Button variant="contained">Create New Aid Material</Button>
+            <Button variant="contained" color="secondary">Create New Aid Material</Button>
           </Link>
           <br />
           <br />
@@ -156,7 +156,7 @@ export default function Page() {
                     <TableCell>{material.quantity}</TableCell>
                     <TableCell>
                       <Tooltip title="Edit Material">
-                        <Button variant="text" onClick={() => handleOpenEditModal(material)}><Edit /></Button>
+                        <Button variant="text" color="secondary" onClick={() => handleOpenEditModal(material)}><Edit /></Button>
                       </Tooltip>
                       <Tooltip title="Delete Material">
                         <Button

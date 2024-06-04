@@ -15,6 +15,8 @@ import PreviewIcon from '@mui/icons-material/Preview';
 import ViewDetailProgram from "~/components/program/view-detail-program";
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3"; 
 import { env } from "~/env";
+
+
 interface ProgramType {
   id: string;
   name: string;
@@ -127,7 +129,7 @@ export default function Page() {
             <Divider />
             <br />
             <Link href="/coordinator/create-program">
-              <Button variant="contained"> Create New Program </Button>
+              <Button variant="contained" color="secondary"> Create New Program </Button>
             </Link>
             <br />
             <br />  
@@ -158,7 +160,7 @@ export default function Page() {
                         </TableCell>
                         <TableCell>
                           <Tooltip title="View Program">
-                            <Button onClick={() => handleViewProgram(program)}><PreviewIcon /></Button>
+                            <Button color="secondary" onClick={() => handleViewProgram(program)}><PreviewIcon /></Button>
                           </Tooltip>
                           <Tooltip title="Delete Program">
                             <Button onClick={() => handleOpenConfirmation(program)}><DeleteIcon color="error" /></Button>

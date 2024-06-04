@@ -99,6 +99,7 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
         { text: 'Home', icon: <HomeIcon />, onClick: () => router.push('/') },
         { text: 'Manage Program', icon: <AllInboxIcon />, onClick: () => router.push('/coordinator/manage-program') },
         { text: 'Aid Material', icon: <AppRegistrationIcon />, onClick: () => router.push('/coordinator/manage-material') },
+        { text: 'Verify Submission', icon: <GridViewIcon />, onClick: () => router.push('/coordinator/verify-submission')}
       ],
     },
     {
@@ -106,7 +107,7 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
       items: [
         { text: 'Home', icon: <HomeIcon />, onClick: () => router.push('/') },
         { text: 'View Program', icon: <GridViewIcon />, onClick: () => router.push('/volunteer/view-program')  },
-        { text: 'Registered Program', icon: <AppRegistrationIcon />, onClick: () => router.push('/volunteer/registered')  },
+        { text: 'Registered Program', icon: <AppRegistrationIcon />, onClick: () => router.push('/volunteer/registered-program')  },
       ],
     },
     {
