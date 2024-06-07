@@ -39,7 +39,7 @@ const FormList: React.FC<UpdateFormProps> = ({ program }) => {
                 onSuccess: () => {
                     console.log(`Form ${formId} status updated to ${status}`);
                     if (status === 'APPROVED' && form.user?.email && form.user?.name ) {
-                        sendEmailCertificate.mutate({email: form.user?.email, name:form.user.name, cert: `ssddsd`});
+                        sendEmailCertificate.mutate({email: form.user?.email, name:form.user.name});
                     }
                 }
             });
