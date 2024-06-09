@@ -1,25 +1,9 @@
 import React, { useState, useEffect } from "react";
-import {
-  Card,
-  Typography,
-  Grid,
-  CardContent,
-  Divider,
-  CardMedia,
-  Alert,
-  Button,
-  Modal,
-  Box,
-  Snackbar,
-  Backdrop,
-  CircularProgress,
-} from "@mui/material";
+import { Card,Typography,Grid,CardContent,Divider, CardMedia,Alert,Button,Modal,Box,Snackbar,Backdrop,CircularProgress,} from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
-
-const endpoint = "https://rnkqnviezsjkhfovplik.supabase.co/storage/v1/object/public/";
-const bucket = "program_media/";
+import imageEndpoint from "../api/storage/publicEndpoint";
 
 interface ProgramType {
   id: string;
@@ -32,7 +16,7 @@ interface ProgramType {
   maxVolunteer: number;
   coordinatorId: string;
   image: string;
-  volunteers: { userId: string; programId: string }[]; // Adjusted structure
+  volunteers: { userId: string; programId: string }[]; 
 }
 
 export default function Page() {
@@ -72,6 +56,9 @@ export default function Page() {
   const handleCloseModal = () => {
     setSelectedProgram(null);
   };
+
+
+
 
   const formatTimeTo12Hour = (time24: string) => {
     const [hoursStr, minutes] = time24.split(":");
@@ -152,7 +139,7 @@ export default function Page() {
                                 <CardMedia
                                   component="img"
                                   height="200"
-                                  image={endpoint + bucket + program.image}
+                                  image={ imageEndpoint()  + program.image}
                                   alt="program image"
                                 />
                                 { !isFull && daysLeft < 7 && (
@@ -227,7 +214,7 @@ export default function Page() {
             p: 4,
           }} 
         >
-          <CardMedia component="img" height="200" image={endpoint + bucket + selectedProgram?.image} alt="program image" />
+          <CardMedia component="img" height="200" image={imageEndpoint() + selectedProgram?.image} alt="program image" />
           <CardContent>
             <Typography variant="h6" gutterBottom>{selectedProgram?.name}</Typography>
             <Typography variant="body1">{selectedProgram?.description}</Typography>
@@ -257,7 +244,12 @@ export default function Page() {
         </Card>
       </Modal>
 
-      {/* Snackbar for success message */}
+
+
+
+        
+
+      
       <Snackbar
         open={!!successMessage}
         autoHideDuration={6000}

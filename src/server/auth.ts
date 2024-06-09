@@ -58,7 +58,6 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/authentication/signIn',
     verifyRequest: '/authentication/verifyRequest',
-    
   },
 };
 

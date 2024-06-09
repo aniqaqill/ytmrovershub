@@ -25,10 +25,10 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
 import { env } from "~/env";
+import  imageEndpoint  from  "../../pages/api/storage/publicEndpoint"
 
 
-const endpoint = "https://rnkqnviezsjkhfovplik.supabase.co/storage/v1/object/public/";
-const bucket = "program_media/";
+
 
 interface ProgramType {
   id: string;
@@ -248,7 +248,7 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
                     </FormControl>
           :  
           <Image
-          src={endpoint + bucket + program.image}
+          src={ imageEndpoint() + program.image}
           alt="program image"
           width={500}
           height={500}
@@ -427,7 +427,7 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
               {isEditing ? (
                 <TableRow>
                   <TableCell colSpan={2}>
-                    <Button variant="contained" onClick={handleOpenConfirmation}>
+                    <Button color="secondary" variant="contained" onClick={handleOpenConfirmation}>
                       Save
                     </Button>
                   </TableCell>
@@ -435,7 +435,7 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
               ) : (
                 <TableRow>
                   <TableCell colSpan={2}>
-                    <Button variant="contained" onClick={handleEditClick}>
+                    <Button fullWidth variant="contained" color="secondary" onClick={handleEditClick}>
                       Edit
                     </Button>
                   </TableCell>

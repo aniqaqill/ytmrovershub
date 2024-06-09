@@ -6,6 +6,8 @@ import { ThemeProvider } from "@mui/material";
 import theme from "~/styles/theme"
 import CssBaseline from "@mui/material/CssBaseline";
 import { api } from "~/utils/api";
+import Head from "next/head";
+
 
 
 
@@ -15,6 +17,11 @@ const MyApp: AppType<{ session: Session | null }> = ({
 }) => {
   return (
     <SessionProvider session={session}>
+      <Head>
+        <title>YTM ROVERS</title>
+        <meta name="description" content="Create By Aniq" />
+        <link rel="icon" href="/logo2.png" />
+      </Head>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Component {...pageProps} />

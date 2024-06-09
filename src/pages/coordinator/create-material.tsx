@@ -7,10 +7,10 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
 import Image from "next/image";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { env } from "~/env";
+import {  PutObjectCommand } from "@aws-sdk/client-s3";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
+import  s3Client  from "../api/storage/s3";
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -51,16 +51,6 @@ export default function CreateMaterial() {
       setFilePreview(null);
     }
   };
-
-  const s3Client = useMemo(() => new S3Client({
-    forcePathStyle: true,
-    region: "ap-southeast-1",
-    endpoint: env.NEXT_PUBLIC_s3_endpoint,
-    credentials: {
-      accessKeyId: env.NEXT_PUBLIC_s3_access_key,
-      secretAccessKey: env.NEXT_PUBLIC_s3_secret_access,
-    },
-  }), []);
 
   const handleUploadImage = async (file: File) => {
     const key = `material/${file.name}`;
@@ -173,12 +163,13 @@ export default function CreateMaterial() {
                 </FormControl>
               </Grid>
               <Grid item xs={12}>
-                <FormControl fullWidth>
+                <FormControl >
                   <Typography variant="body2">Material Image</Typography>
                   <Button
                     component="label"
-                    variant="contained"
+                    
                     startIcon={<CloudUploadIcon />}
+                    color="secondary"
                   >
                     Upload file
                     <VisuallyHiddenInput
@@ -201,7 +192,7 @@ export default function CreateMaterial() {
                 </FormControl>
               </Grid>
               <Grid item xs={12}>
-                <Button type="submit" variant="contained">Create Material</Button>
+                <Button color="secondary" type="submit" variant="contained">Create Material</Button>
               </Grid>
             </Grid>
           </Box>
