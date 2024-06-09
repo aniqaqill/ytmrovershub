@@ -122,7 +122,9 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
   const currentList = lists.find(list => list.role === userRole);
 
   return (
+    
     <Box sx={{ display: 'flex' }}>
+
       <AppBar position="fixed" open={open} >
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
         {sessionData && (

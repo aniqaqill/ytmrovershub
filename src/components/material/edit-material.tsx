@@ -4,9 +4,10 @@ import { Button, Typography, Box, FormControl, TextField, Grid, Snackbar, Alert 
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
 import Image from "next/image";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { env } from "~/env";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import  s3Client  from "../../pages/api/storage/s3";
 import { api } from "~/utils/api";
+import  imageEndpoint  from  "../../pages/api/storage/publicEndpoint"
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -31,8 +32,6 @@ interface EditMaterialProps {
   onClose: () => void;
 }
 
-const endpoint = "https://rnkqnviezsjkhfovplik.supabase.co/storage/v1/object/public/";
-const bucket = "program_media/";
 
 const EditMaterial: React.FC<EditMaterialProps> = ({ material,onClose }) => {
   const [name, setName] = useState(material.name);
@@ -57,15 +56,6 @@ const EditMaterial: React.FC<EditMaterialProps> = ({ material,onClose }) => {
     }
   };
 
-  const s3Client = new S3Client({
-    forcePathStyle: true,
-    region: "ap-southeast-1",
-    endpoint: env.NEXT_PUBLIC_s3_endpoint,
-    credentials: {
-      accessKeyId: env.NEXT_PUBLIC_s3_access_key,
-      secretAccessKey: env.NEXT_PUBLIC_s3_secret_access,
-    },
-  });
 
   const handleUploadImage = async (file: File) => {
     const key = `material/${file.name}`;
@@ -181,7 +171,7 @@ const EditMaterial: React.FC<EditMaterialProps> = ({ material,onClose }) => {
             {(file ?? material.image) && (
               <Box mt={2} textAlign="center">
                 <Image
-                  src={filePreview ?? `${endpoint}${bucket}${material.image}`}
+                  src={filePreview ?? imageEndpoint() + material.image}
                   alt={name}
                   style={{ maxHeight: 200 }}
                   width={200}

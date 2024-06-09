@@ -1,11 +1,11 @@
-import React, { useState, useMemo} from "react";
+import React, { useState} from "react";
 import { DialogTitle, DialogContent, DialogActions, Button, FormControl, TextField, FormLabel, Box, Snackbar, Alert, IconButton, Dialog, Typography } from "@mui/material";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Image from "next/image";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {  PutObjectCommand } from "@aws-sdk/client-s3";
 import { api } from "~/utils/api";
-import { env } from "~/env";
+import  s3Client  from "../../pages/api/storage/s3";
 import { styled } from '@mui/material/styles';
 import { useSession } from "next-auth/react";
 
@@ -47,15 +47,6 @@ const CreateForm: React.FC<CreateFormProps> = ({ program, onClose }) => {
   const createForm = api.formInfo.createForm.useMutation();
   const getStatusEachProgramByVolunteer = api.formInfo.getStatusEachProgramByVolunteer.useQuery ({ volunteerId: sessionData?.user?.id ?? "", programId: program?.id ?? "" });
 
-  const s3Client = useMemo(() => new S3Client({
-    forcePathStyle: true,
-    region: "ap-southeast-1",
-    endpoint: env.NEXT_PUBLIC_s3_endpoint,
-    credentials: {
-      accessKeyId: env.NEXT_PUBLIC_s3_access_key,
-      secretAccessKey: env.NEXT_PUBLIC_s3_secret_access,
-    },
-  }), []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files ?? []);

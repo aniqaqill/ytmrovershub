@@ -18,9 +18,6 @@ interface StatusFormProps {
   program: ProgramType | null;
 }
 
-
-
-
 const FormStatus: React.FC<StatusFormProps> = ({ program }) => {
   const { data: sessionData } = useSession();
   const getStatusEachProgramByVolunteer = api.formInfo.getStatusEachProgramByVolunteer.useQuery ({ volunteerId: sessionData?.user?.id ?? "", programId: program?.id ?? "" });

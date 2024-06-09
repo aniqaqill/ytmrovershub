@@ -4,7 +4,6 @@ import { userInfoRouter } from "./routers/userInfo";
 import { programInfoRouter } from "./routers/programInfo";
 import { materialInfoRouter } from "./routers/materialInfo";
 import { formInfoRouter } from "./routers/formInfo";
-import { s3Router } from "./routers/s3";
 import { sendEmailCert } from "./routers/sendemaillCert";
 /**
  * This is the primary router for your server.
@@ -17,7 +16,6 @@ export const appRouter = createTRPCRouter({
   programInfo: programInfoRouter,
   materialInfo: materialInfoRouter,
   formInfo: formInfoRouter,
-  s3Router : s3Router,
   sendEmailCert: sendEmailCert,
 });
 
