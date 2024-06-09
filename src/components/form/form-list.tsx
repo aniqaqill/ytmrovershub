@@ -120,7 +120,7 @@ const FormList: React.FC<UpdateFormProps> = ({ program }) => {
                             size="small"
                         />
 
-                        <Tooltip title="Filter by status">
+                        <Tooltip title="Filter by status" placement="top">
                         <FormControl variant="outlined" size="small">
                             <Select
                                 value={statusFilter}
