@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-    Table, TableBody, TableCell, TableHead, TableRow, Button, CircularProgress, Typography, Dialog, DialogContent, DialogActions, IconButton, Snackbar, Alert, Chip, TextField, Box, MenuItem, Select, InputLabel, FormControl,
+    Table, TableBody, TableCell, TableHead, TableRow, Button, CircularProgress, Typography, Dialog, DialogContent, DialogActions, IconButton, Snackbar, Alert, Chip, TextField, Box, MenuItem, Select,  FormControl,
     Tooltip
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
@@ -91,8 +91,8 @@ const FormList: React.FC<UpdateFormProps> = ({ program }) => {
                 return 'success';
             case 'REJECTED':
                 return 'error';
-            default:
-                return 'default';
+            case 'SUBMITTED':
+                return 'warning';
         }
     };
 
