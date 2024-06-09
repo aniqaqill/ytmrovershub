@@ -12,8 +12,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
 import Image from "next/image";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { env } from "~/env";
+import {  PutObjectCommand } from "@aws-sdk/client-s3";
+import  s3Client  from "../api/storage/s3";
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -83,15 +83,7 @@ export default function CreateProgram() {
     }
   };
 
-  const s3Client = useMemo(() => new S3Client({
-    forcePathStyle: true,
-    region: "ap-southeast-1",
-    endpoint: env.NEXT_PUBLIC_s3_endpoint,
-    credentials: {
-      accessKeyId: env.NEXT_PUBLIC_s3_access_key,
-      secretAccessKey: env.NEXT_PUBLIC_s3_secret_access,
-    },
-  }), []);
+
 
   const handleUploadImage = async (file: File) => {
     const key = `program/${file.name}`;

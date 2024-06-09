@@ -5,14 +5,13 @@ import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
 import Link from "next/link";
 import DeleteIcon from '@mui/icons-material/Delete';
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { env } from "~/env";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import Image from "next/image";
 import Edit from "@mui/icons-material/Edit";
 import EditMaterial from "~/components/material/edit-material";
+import   s3Client   from "../api/storage/s3";
+import  imageEndpoint  from  "../api/storage/publicEndpoint"
 
-const endpoint = "https://rnkqnviezsjkhfovplik.supabase.co/storage/v1/object/public/";
-const bucket = "program_media/";
 
 interface Material {
   id: string;
@@ -37,15 +36,6 @@ export default function Page() {
     return sessionData?.user && sessionData.user.role === "coordinator";
   }, [sessionData]);
 
-  const s3Client = useMemo(() => new S3Client({
-    forcePathStyle: true,
-    region: "ap-southeast-1",
-    endpoint: env.NEXT_PUBLIC_s3_endpoint,
-    credentials: {
-      accessKeyId: env.NEXT_PUBLIC_s3_access_key,
-      secretAccessKey: env.NEXT_PUBLIC_s3_secret_access,
-    },
-  }), []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -113,7 +103,7 @@ export default function Page() {
           <Divider />
           <br />
           <Link href="/coordinator/create-material">
-            <Button variant="contained">Create New Aid Material</Button>
+            <Button variant="contained" color="secondary">Create New Aid Material</Button>
           </Link>
           <br />
           <br />
@@ -140,7 +130,7 @@ export default function Page() {
                       <Box display="flex" alignItems="center" justifyContent="left">
                           {material.image && (
                             <Image
-                              src={`${endpoint}${bucket}${material.image}`}
+                              src={imageEndpoint() + `${material.image}`}
                               alt={material.name}
                               width={50}
                               height={50}
@@ -156,7 +146,7 @@ export default function Page() {
                     <TableCell>{material.quantity}</TableCell>
                     <TableCell>
                       <Tooltip title="Edit Material">
-                        <Button variant="text" onClick={() => handleOpenEditModal(material)}><Edit /></Button>
+                        <Button variant="text" color="secondary" onClick={() => handleOpenEditModal(material)}><Edit /></Button>
                       </Tooltip>
                       <Tooltip title="Delete Material">
                         <Button

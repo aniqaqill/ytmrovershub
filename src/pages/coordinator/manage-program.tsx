@@ -13,8 +13,10 @@ import { api } from "~/utils/api";
 import DeleteIcon from '@mui/icons-material/Delete';
 import PreviewIcon from '@mui/icons-material/Preview';
 import ViewDetailProgram from "~/components/program/view-detail-program";
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3"; 
-import { env } from "~/env";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3"; 
+import  s3Client  from "../api/storage/s3";
+
+
 interface ProgramType {
   id: string;
   name: string;
@@ -40,15 +42,7 @@ export default function Page() {
   const { data: programs, isLoading, isError, refetch: refetchPrograms } = api.programInfo.getAllProgram.useQuery();
   const deleteProgram = api.programInfo.deleteProgramById.useMutation();
 
-  const s3Client = useMemo(() => new S3Client({
-    forcePathStyle: true,
-    region: "ap-southeast-1",
-    endpoint: env.NEXT_PUBLIC_s3_endpoint,
-    credentials: {
-      accessKeyId: env.NEXT_PUBLIC_s3_access_key,
-      secretAccessKey: env.NEXT_PUBLIC_s3_secret_access,
-    },
-  }), []);
+ 
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -127,7 +121,7 @@ export default function Page() {
             <Divider />
             <br />
             <Link href="/coordinator/create-program">
-              <Button variant="contained"> Create New Program </Button>
+              <Button variant="contained" color="secondary"> Create New Program </Button>
             </Link>
             <br />
             <br />  
@@ -158,7 +152,7 @@ export default function Page() {
                         </TableCell>
                         <TableCell>
                           <Tooltip title="View Program">
-                            <Button onClick={() => handleViewProgram(program)}><PreviewIcon /></Button>
+                            <Button color="secondary" onClick={() => handleViewProgram(program)}><PreviewIcon /></Button>
                           </Tooltip>
                           <Tooltip title="Delete Program">
                             <Button onClick={() => handleOpenConfirmation(program)}><DeleteIcon color="error" /></Button>
