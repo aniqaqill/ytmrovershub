@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Typography, Alert, Button, Dialog, Backdrop, CircularProgress,Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import {
+  Typography, Alert, Button, Dialog, Backdrop, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar,
+  Divider
+} from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
 import CreateForm from "~/components/form/create-form";
 import FormStatus from "~/components/form/getEachFormStatus";
+import DeleteIcon from '@mui/icons-material/Delete';
 
 interface ProgramType {
   id: string;
@@ -22,11 +26,22 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openForm, setOpenForm] = useState(false);
+  const [openConfirm, setOpenConfirm] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState<ProgramType | null>(null);
+  const [programToUnregister, setProgramToUnregister] = useState<ProgramType | null>(null);
+  const [showAlert, setShowAlert] = useState(false);
   const getRegisteredPrograms = api.programInfo.getVolunteerPrograms.useQuery({ volunteerId: sessionData?.user?.id ?? "" });
+  const unregisterVolunteer = api.programInfo.unregisterVolunteer.useMutation();
   const isLoggedInVolunteer = sessionData?.user && sessionData.user.role === "volunteer";
- 
-  
+
+  useEffect(() => {
+    if (!isLoggedInVolunteer) {
+      const timer = setTimeout(() => {
+        window.location.href = "/";
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedInVolunteer]);
 
   useEffect(() => {
     if (isLoggedInVolunteer) {
@@ -61,8 +76,18 @@ export default function Page() {
   };
 
   const handleFormOpen = (program: ProgramType) => {
-    setSelectedProgram(program);
-    setOpenForm(true);
+    const now = new Date();
+    const eventDate = new Date(program.startDate);
+    const [startHours, startMinutes] = program.startTime.split(":").map(Number);
+    eventDate.setHours(startHours!);
+    eventDate.setMinutes(startMinutes!);
+
+    if (now >= eventDate) {
+      setSelectedProgram(program);
+      setOpenForm(true);
+    } else {
+      setShowAlert(true);
+    }
   };
 
   const handleFormClose = () => {
@@ -70,56 +95,132 @@ export default function Page() {
     setSelectedProgram(null);
   };
 
+  const handleConfirmOpen = (program: ProgramType) => {
+    setProgramToUnregister(program);
+    setOpenConfirm(true);
+  };
+
+  const handleConfirmClose = () => {
+    setOpenConfirm(false);
+    setProgramToUnregister(null);
+  };
+
+  const handleUnregister = async () => {
+    if (programToUnregister && sessionData?.user?.id) {
+      try {
+        await unregisterVolunteer.mutateAsync({
+          programId: programToUnregister.id,
+          volunteerId: sessionData.user.id,
+        });
+        setRegisteredPrograms((prev) =>
+          prev.filter((program) => program.id !== programToUnregister.id)
+        );
+        setOpenConfirm(false);
+      } catch (error) {
+        setError("Failed to unregister from the program. Please try again.");
+      }
+    }
+  };
+
+  const handleAlertClose = () => {
+    setShowAlert(false);
+  };
+
+  const today = new Date();
+  const upcomingPrograms = registeredPrograms.filter((program) => new Date(program.startDate) >= today);
+  const pastPrograms = registeredPrograms.filter((program) => new Date(program.startDate) < today);
+
   return (
     <div>
       <BaseLayout pageIndex={1}>
         {isLoggedInVolunteer ? (
           <>
-            <Typography variant="h5" gutterBottom>
+            <Typography variant="h4" gutterBottom>
               Registered Programs
             </Typography>
+            <Divider />
             {loading ? (
               <Backdrop open>
                 <CircularProgress />
               </Backdrop>
             ) : error ? (
               <Alert severity="error">{error}</Alert>
-            ) : registeredPrograms.length === 0 ? (
-              <Alert severity="info">You are not registered in any programs.</Alert>
             ) : (
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Start Date</TableCell>
-                    <TableCell>Start Time</TableCell>
-                    <TableCell>End Time</TableCell>
-                    <TableCell>Location</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Action</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {registeredPrograms.map((program) => (
-                    <TableRow key={program.id}>
-                      <TableCell>{program.name}</TableCell>
-                      <TableCell>{formatDate(program.startDate)}</TableCell>
-                      <TableCell>{formatTimeTo12Hour(program.startTime)}</TableCell>
-                      <TableCell>{formatTimeTo12Hour(program.endTime)}</TableCell>
-                      <TableCell>{program.location}</TableCell>
-                      <TableCell><FormStatus program={program}/></TableCell>
-                      <TableCell>
-                        <Button onClick={() => handleFormOpen(program)} variant="contained" color="secondary">
-                          Submit Forn
-                        </Button>
-                        <Button variant="contained" color="error">
-                          Cancel Registration
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <>
+                <Typography variant="h6" gutterBottom>
+                  Upcoming Programs
+                </Typography>
+                {upcomingPrograms.length === 0 ? (
+                  <Alert severity="info">You have no upcoming programs.</Alert>
+                ) : (
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Start Date</TableCell>
+                        <TableCell>Start Time</TableCell>
+                        <TableCell>End Time</TableCell>
+                        <TableCell>Location</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Action</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {upcomingPrograms.map((program) => (
+                        <TableRow key={program.id}>
+                          <TableCell>{program.name}</TableCell>
+                          <TableCell>{formatDate(program.startDate)}</TableCell>
+                          <TableCell>{formatTimeTo12Hour(program.startTime)}</TableCell>
+                          <TableCell>{formatTimeTo12Hour(program.endTime)}</TableCell>
+                          <TableCell>{program.location}</TableCell>
+                          <TableCell><FormStatus program={program}/></TableCell>
+                          <TableCell>
+                            <Button onClick={() => handleFormOpen(program)} variant="contained" color="secondary">
+                              Submit Form
+                            </Button>
+                            <Tooltip title="Cancel Registration">
+                              <Button onClick={() => handleConfirmOpen(program)} variant="text" color="error">
+                                <DeleteIcon />
+                              </Button>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+                <Typography variant="h6" gutterBottom style={{ marginTop: '20px' }}>
+                  Past Programs (History)
+                </Typography>
+                {pastPrograms.length === 0 ? (
+                  <Alert severity="info">You have no past programs.</Alert>
+                ) : (
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Start Date</TableCell>
+                        <TableCell>Start Time</TableCell>
+                        <TableCell>End Time</TableCell>
+                        <TableCell>Location</TableCell>
+                        <TableCell>Status</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {pastPrograms.map((program) => (
+                        <TableRow key={program.id}>
+                          <TableCell>{program.name}</TableCell>
+                          <TableCell>{formatDate(program.startDate)}</TableCell>
+                          <TableCell>{formatTimeTo12Hour(program.startTime)}</TableCell>
+                          <TableCell>{formatTimeTo12Hour(program.endTime)}</TableCell>
+                          <TableCell>{program.location}</TableCell>
+                          <TableCell><FormStatus program={program}/></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </>
             )}
           </>
         ) : (
@@ -130,6 +231,29 @@ export default function Page() {
       <Dialog open={openForm} onClose={handleFormClose} fullWidth={true}>
         <CreateForm program={selectedProgram} onClose={handleFormClose} />
       </Dialog>
+
+      <Dialog open={openConfirm} onClose={handleConfirmClose}>
+        <DialogTitle>Confirm Unregistration</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to unregister from the program {programToUnregister?.name}?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleConfirmClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleUnregister} color="error" autoFocus>
+            Unregister
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar open={showAlert} autoHideDuration={6000} onClose={handleAlertClose}>
+        <Alert onClose={handleAlertClose} severity="warning">
+          You can only submit the form once the program has started.
+        </Alert>
+      </Snackbar>
     </div>
   );
 }

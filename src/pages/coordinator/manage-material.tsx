@@ -35,6 +35,15 @@ export default function Page() {
   const isLoggedInCoordinator = useMemo(() => {
     return sessionData?.user && sessionData.user.role === "coordinator";
   }, [sessionData]);
+  
+  useEffect(() => {
+    if (!isLoggedInCoordinator) {
+        const timer = setTimeout(() => {
+          window.location.href = "/";
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+}, [isLoggedInCoordinator]);
 
 
   useEffect(() => {

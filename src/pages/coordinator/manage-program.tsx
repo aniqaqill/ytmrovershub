@@ -3,8 +3,7 @@ import {
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
   Divider, Table, TableBody, TableCell, TableHead, TableRow,
   Typography, CircularProgress, Tooltip, Snackbar, Alert,
-  Stack,
-  Backdrop
+  Stack, Backdrop, TextField
 } from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
@@ -14,8 +13,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PreviewIcon from '@mui/icons-material/Preview';
 import ViewDetailProgram from "~/components/program/view-detail-program";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3"; 
-import  s3Client  from "../api/storage/s3";
-
+import s3Client from "../api/storage/s3";
 
 interface ProgramType {
   id: string;
@@ -32,9 +30,8 @@ interface ProgramType {
 
 export default function Page() {
   const { data: sessionData } = useSession();
-  const isLoggedInCoordinator = useMemo(() => {
-    return sessionData?.user && sessionData.user.role === "coordinator";
-  }, [sessionData]);
+  const isLoggedInCoordinator = useMemo(() => { return sessionData?.user && sessionData.user.role === "coordinator";}, [sessionData]);
+
   const [selectedProgram, setSelectedProgram] = useState<ProgramType | null>(null);
   const [programToDelete, setProgramToDelete] = useState<ProgramType | null>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
@@ -42,7 +39,18 @@ export default function Page() {
   const { data: programs, isLoading, isError, refetch: refetchPrograms } = api.programInfo.getAllProgram.useQuery();
   const deleteProgram = api.programInfo.deleteProgramById.useMutation();
 
- 
+  const [upcomingSearchQuery, setUpcomingSearchQuery] = useState("");
+  const [pastSearchQuery, setPastSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!isLoggedInCoordinator) {
+      const timer = setTimeout(() => {
+        window.location.href = "/";
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedInCoordinator]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -104,7 +112,6 @@ export default function Page() {
 
   // Helper function to format the date
   const formatDate = (dateString: Date) => {
-    // format the date to a more readable format which is dd/mm/yyyy
     const date = new Date(dateString);
     const day = date.getDate();
     const month = date.getMonth() + 1;
@@ -112,76 +119,147 @@ export default function Page() {
     return `${day}/${month}/${year}`;
   };
 
+  // Filter programs into upcoming and past
+  const currentDate = new Date();
+  const upcomingPrograms = programs?.filter(program => new Date(program.startDate) >= currentDate);
+  const pastPrograms = programs?.filter(program => new Date(program.startDate) < currentDate);
+
+  // Filter programs based on search queries
+  const filteredUpcomingPrograms = upcomingPrograms?.filter(program =>
+    program.name.toLowerCase().includes(upcomingSearchQuery.toLowerCase())
+  );
+
+  const filteredPastPrograms = pastPrograms?.filter(program =>
+    program.name.toLowerCase().includes(pastSearchQuery.toLowerCase())
+  );
+
   return (
     <div>
       <BaseLayout pageIndex={1}>
         {isLoggedInCoordinator ? (
           <>
-            <Typography variant="h5" margin={2}>Manage Programs</Typography>
+            <Typography variant="h4" margin={2}>Manage Programs</Typography>
             <Divider />
             <br />
             <Link href="/coordinator/create-program">
-              <Button variant="contained" color="secondary"> Create New Program </Button>
+              <Button variant="contained" color="secondary">Create New Program</Button>
             </Link>
             <br />
-            <br />  
             {isLoading ? (
-               <Backdrop open>
+              <Backdrop open>
                 <CircularProgress />
               </Backdrop>
             ) : isError ? (
               <Typography variant="body1">Error fetching programs. Please try again later.</Typography>
             ) : (
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Program Name</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                {(programs?.length ?? 0) > 0 ? (
-                    programs?.map((program) => (
-                      <TableRow key={program.id}>
-                        <TableCell>{program.name}</TableCell>
-                        <TableCell>{program.location}</TableCell>
-                        <TableCell>
-                          {formatDate(program.startDate)}
-                        </TableCell>
-                        <TableCell>
-                          <Tooltip title="View Program">
-                            <Button color="secondary" onClick={() => handleViewProgram(program)}><PreviewIcon /></Button>
-                          </Tooltip>
-                          <Tooltip title="Delete Program">
-                            <Button onClick={() => handleOpenConfirmation(program)}><DeleteIcon color="error" /></Button>
-                          </Tooltip>
+              <>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="h6" margin={2}>Upcoming Programs</Typography>
+                <TextField
+                  placeholder="Search"
+                  variant="outlined"
+                  value={upcomingSearchQuery}
+                  onChange={(e) => setUpcomingSearchQuery(e.target.value)}
+                  size="small"
+                  style={{ margin : 10}}
+                />
+              </Stack>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Program Name</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(filteredUpcomingPrograms?.length ?? 0) > 0 ? (
+                      filteredUpcomingPrograms?.map((program) => (
+                        <TableRow key={program.id}>
+                          <TableCell>{program.name}</TableCell>
+                          <TableCell>{program.location}</TableCell>
+                          <TableCell>{formatDate(program.startDate)}</TableCell>
+                          <TableCell>
+                            <Tooltip title="View Program">
+                              <Button color="secondary" onClick={() => handleViewProgram(program)}><PreviewIcon /></Button>
+                            </Tooltip>
+                            <Tooltip title="Delete Program">
+                              <Button onClick={() => handleOpenConfirmation(program)}><DeleteIcon color="error" /></Button>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">
+                          <Alert severity="info">There are no upcoming programs.</Alert>
                         </TableCell>
                       </TableRow>
-                    ))
-                  ) : (
+                    )}
+                  </TableBody>
+                </Table>
+                <Stack direction="row" justifyContent="space-between">
+                <Typography variant="h6" margin={2}>Past Programs</Typography>
+                <TextField
+                  placeholder="Search"
+                  variant="outlined"
+                  value={pastSearchQuery}
+                  onChange={(e) => setPastSearchQuery(e.target.value)}
+                  size="small"
+                  style={{ margin: 10 }}
+                />
+              </Stack>
+                <Table size="small">
+                  <TableHead>
                     <TableRow>
-                      <TableCell colSpan={4} align="center">
-                      <Alert severity="info">There are no program created and available yet.</Alert>
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Program Name</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHead>
+                  <TableBody>
+                    {(filteredPastPrograms?.length ?? 0) > 0 ? (
+                      filteredPastPrograms?.map((program) => (
+                        <TableRow key={program.id}>
+                          <TableCell>{program.name}</TableCell>
+                          <TableCell>{program.location}</TableCell>
+                          <TableCell>{formatDate(program.startDate)}</TableCell>
+                          <TableCell>
+                            <Tooltip title="View Program">
+                              <Button color="secondary" onClick={() => handleViewProgram(program)}><PreviewIcon /></Button>
+                            </Tooltip>
+                            <Tooltip title="Delete Program">
+                              <Button onClick={() => handleOpenConfirmation(program)}><DeleteIcon color="error" /></Button>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">
+                          <Alert severity="info">There are no past programs.</Alert>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </>
             )}
           </>
         ) : (
           <Typography variant="body1">You are not authorized to access this page.</Typography>
         )}
       </BaseLayout>
-
-      {/* Render the ViewDetailProgram component inside a dialog */}
+  
+      {/* Modal for viewing program details */}
       <Dialog fullWidth={true} maxWidth="md" open={!!selectedProgram} onClose={handleCloseModal}>
-        <DialogTitle><Stack direction="row" justifyContent="space-between">
-          <Typography variant="h5">{selectedProgram?.name}&apos;s Program</Typography>
-          <Button onClick={handleCloseModal}>Close</Button>
-        </Stack>
+        <DialogTitle>
+          <Stack direction="row" justifyContent="space-between">
+            <Typography variant="h5">{selectedProgram?.name}&apos;s Program</Typography>
+            <Button onClick={handleCloseModal}>Close</Button>
+          </Stack>
         </DialogTitle>
         <DialogContent>
           {selectedProgram && <ViewDetailProgram program={selectedProgram} />}

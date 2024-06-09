@@ -35,6 +35,7 @@ const sendEmailCert = protectedProcedure
   .input(z.object({
     email: z.string().email(),
     name: z.string(),
+    program : z.string()
   }))
   .mutation(async ({ input }) => {
     try {
@@ -58,13 +59,14 @@ const sendEmailCert = protectedProcedure
           }
         ],
         content: [
-          { text: `${input.name}`, style: 'header' },
+          // { text: `${input.name}`, style: 'header' },
+          { text: `${input.name} for completing the ${input.program} program.`, style: 'header'},
           
         ],
         styles: {
           header: {
-            margin : [20, 230, 0, 0],
-            fontSize: 24,
+            margin : [20, 240, 0, 0],
+            fontSize: 18,
             bold: true,
           },
         },

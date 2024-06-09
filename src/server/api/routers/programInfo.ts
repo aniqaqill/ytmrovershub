@@ -188,6 +188,18 @@ export const programInfoRouter = createTRPCRouter({
       return registration;
     }),
 
+  unregisterVolunteer: protectedProcedure
+    .input(RegisterInput)
+    .mutation(async ({ input }) => {
+      const unregistration = await prisma.volunteerProgram.deleteMany({
+        where: {
+          programId: input.programId,
+          userId: input.volunteerId,
+        },
+      });
+      return { success: unregistration.count > 0 };
+    }),
+
   getVolunteerPrograms: protectedProcedure
     .input(z.object({ volunteerId: z.string() }))
     .query(async ({ input }) => {
