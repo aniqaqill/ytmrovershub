@@ -9,8 +9,8 @@ import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import Image from "next/image";
 import Edit from "@mui/icons-material/Edit";
 import EditMaterial from "~/components/material/edit-material";
-import   s3Client   from "../api/storage/s3";
-import  imageEndpoint  from  "../api/storage/publicEndpoint"
+import s3Client from "../api/storage/s3";
+import imageEndpoint from "../api/storage/publicEndpoint";
 
 
 interface Material {
@@ -25,7 +25,7 @@ export default function Page() {
   const { data: sessionData } = useSession();
   const { data: materials, isLoading, isError, refetch: refetchMaterials } = api.materialInfo.getAllAidMaterial.useQuery();
   const deleteMaterial = api.materialInfo.deleteAidMaterialById.useMutation();
-  
+
   const [materialToDelete, setMaterialToDelete] = useState<Material | null>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
@@ -35,15 +35,15 @@ export default function Page() {
   const isLoggedInCoordinator = useMemo(() => {
     return sessionData?.user && sessionData.user.role === "coordinator";
   }, [sessionData]);
-  
+
   useEffect(() => {
     if (!isLoggedInCoordinator) {
-        const timer = setTimeout(() => {
-          window.location.href = "/";
-        }, 2000);
-        return () => clearTimeout(timer);
-      }
-}, [isLoggedInCoordinator]);
+      const timer = setTimeout(() => {
+        window.location.href = "/";
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedInCoordinator]);
 
 
   useEffect(() => {
@@ -123,54 +123,60 @@ export default function Page() {
           ) : isError ? (
             <Typography variant="body1">An error occurred while fetching data.</Typography>
           ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Quantity</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {materials?.map((material) => (
-                  <TableRow key={material.id}>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" justifyContent="left">
-                          {material.image && (
-                            <Image
-                              src={imageEndpoint() + `${material.image}`}
-                              alt={material.name}
-                              width={50}
-                              height={50}
-                              style={{ marginRight: '10px' }} 
-                            />
-                          )}
-                          <Typography variant="body1" align="center">
-                            {material.name}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                    <TableCell>{material.description}</TableCell>
-                    <TableCell>{material.quantity}</TableCell>
-                    <TableCell>
-                      <Tooltip title="Edit Material">
-                        <Button variant="text" color="secondary" onClick={() => handleOpenEditModal(material)}><Edit /></Button>
-                      </Tooltip>
-                      <Tooltip title="Delete Material">
-                        <Button
-                          variant="text"
-                          color="error"
-                          onClick={() => handleOpenConfirmation(material)}
-                        >
-                          <DeleteIcon />
-                        </Button>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <>
+              {materials && materials.length > 0 ? (
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Quantity</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {materials.map((material) => (
+                      <TableRow key={material.id}>
+                        <TableCell>
+                          <Box display="flex" alignItems="center" justifyContent="left">
+                            {material.image && (
+                              <Image
+                                src={imageEndpoint() + `${material.image}`}
+                                alt={material.name}
+                                width={50}
+                                height={50}
+                                style={{ marginRight: '10px' }}
+                              />
+                            )}
+                            <Typography variant="body1" align="center">
+                              {material.name}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>{material.description}</TableCell>
+                        <TableCell>{material.quantity}</TableCell>
+                        <TableCell>
+                          <Tooltip title="Edit Material">
+                            <Button variant="text" color="secondary" onClick={() => handleOpenEditModal(material)}><Edit /></Button>
+                          </Tooltip>
+                          <Tooltip title="Delete Material">
+                            <Button
+                              variant="text"
+                              color="error"
+                              onClick={() => handleOpenConfirmation(material)}
+                            >
+                              <DeleteIcon />
+                            </Button>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <Alert severity="info">No materials available.</Alert>
+              )}
+            </>
           )}
         </>
       ) : (
@@ -181,7 +187,7 @@ export default function Page() {
       <Dialog open={isEditModalOpen} onClose={handleCloseEditModal}>
         <DialogTitle>Edit Material</DialogTitle>
         <DialogContent>
-          {selectedMaterial && <EditMaterial material={selectedMaterial}  onClose={handleCloseEditModal} />}
+          {selectedMaterial && <EditMaterial material={selectedMaterial} onClose={handleCloseEditModal} />}
         </DialogContent>
       </Dialog>
 

@@ -26,19 +26,18 @@ interface ProgramType {
   maxVolunteer: number;
   coordinatorId: string;
   image: string;
+  materials: { id: string; quantityUsed: number }[]; // Ensure materials is included
 }
 
 export default function Page() {
   const { data: sessionData } = useSession();
   const isLoggedInCoordinator = useMemo(() => { return sessionData?.user && sessionData.user.role === "coordinator";}, [sessionData]);
-
   const [selectedProgram, setSelectedProgram] = useState<ProgramType | null>(null);
   const [programToDelete, setProgramToDelete] = useState<ProgramType | null>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const { data: programs, isLoading, isError, refetch: refetchPrograms } = api.programInfo.getAllProgram.useQuery();
   const deleteProgram = api.programInfo.deleteProgramById.useMutation();
-
   const [upcomingSearchQuery, setUpcomingSearchQuery] = useState("");
   const [pastSearchQuery, setPastSearchQuery] = useState("");
 
@@ -76,30 +75,32 @@ export default function Page() {
     setIsConfirmationOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!programToDelete) return;
-    try {
-      // Start deletion process
+const handleConfirmDelete = async () => {
+
+  try {
+    // Check if the image is not empty before attempting to delete it from S3
+    if (programToDelete?.image) {
       const deleteParams = {
         Bucket: "program_media", // Replace with your S3 bucket name
-        Key: programToDelete.image,
+        Key: programToDelete?.image,
       };
       const deleteCommand = new DeleteObjectCommand(deleteParams);
       await s3Client.send(deleteCommand);
 
       console.log('Image deleted successfully from S3');
-
-      // Delete the program from the database
-      await deleteProgram.mutateAsync({ id: programToDelete.id });
-      console.log('Program deleted successfully from the database');
-
-      setIsConfirmationOpen(false);
-      await refetchPrograms();
-      setSnackbarOpen(true); // Show the snackbar on successful deletion
-    } catch (error) {
-      console.error('Error during deletion process:', error);
     }
-  };
+
+    // Delete the program from the database
+    await deleteProgram.mutateAsync({ id: programToDelete?.id ?? "" });
+    console.log('Program deleted successfully from the database');
+
+    setIsConfirmationOpen(false);
+    await refetchPrograms();
+    setSnackbarOpen(true); // Show the snackbar on successful deletion
+  } catch (error) {
+    console.error('Error during deletion process:', error);
+  }
+};
 
   const handleCancelDelete = () => {
     setIsConfirmationOpen(false);
@@ -247,43 +248,39 @@ export default function Page() {
                 </Table>
               </>
             )}
+            <Dialog open={isConfirmationOpen} onClose={handleCancelDelete}>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+              <DialogContent>
+                <Typography>Are you sure you want to delete the program {programToDelete?.name} ?</Typography>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleCancelDelete}>Cancel</Button>
+                <Button onClick={handleConfirmDelete} color="error">Confirm</Button>
+              </DialogActions>
+            </Dialog>
+            <Dialog open={selectedProgram !== null} onClose={handleCloseModal}>
+              <DialogTitle>Program Detail</DialogTitle>
+              <DialogContent>
+                {selectedProgram && (
+                  <ViewDetailProgram program={selectedProgram}  />
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleCloseModal}>Close</Button>
+              </DialogActions>
+            </Dialog>
+            <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleSnackbarClose}>
+              <Alert onClose={handleSnackbarClose} severity="success">
+                Program deleted successfully.
+              </Alert>
+            </Snackbar>
           </>
         ) : (
-          <Typography variant="body1">You are not authorized to access this page.</Typography>
+          <Backdrop open>
+            <CircularProgress />
+          </Backdrop>
         )}
       </BaseLayout>
-  
-      {/* Modal for viewing program details */}
-      <Dialog fullWidth={true} maxWidth="md" open={!!selectedProgram} onClose={handleCloseModal}>
-        <DialogTitle>
-          <Stack direction="row" justifyContent="space-between">
-            <Typography variant="h5">{selectedProgram?.name}&apos;s Program</Typography>
-            <Button onClick={handleCloseModal}>Close</Button>
-          </Stack>
-        </DialogTitle>
-        <DialogContent>
-          {selectedProgram && <ViewDetailProgram program={selectedProgram} />}
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmation dialog for deleting a program */}
-      <Dialog fullWidth={true} maxWidth="md" open={isConfirmationOpen} onClose={handleCancelDelete}>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <Typography>Are you sure you want to delete this program?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelDelete}>Cancel</Button>
-          <Button onClick={handleConfirmDelete} color="error">Delete</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar for successful deletion */}
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
-        <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: '100%' }}>
-          Program deleted successfully!
-        </Alert>
-      </Snackbar>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import BaseLayout from "~/components/BaseLayout";
-import { Divider, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Backdrop, CircularProgress, Button, Modal, Stack, Box, TextField } from "@mui/material";
+import { Divider, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Backdrop, CircularProgress, Button, Modal, Stack, Box, TextField, Alert } from "@mui/material";
 import { api } from "~/utils/api";
 import FormList from "~/components/form/form-list";
 import { Close as CloseIcon } from "@mui/icons-material";
@@ -112,6 +112,56 @@ export default function VerifySubmission() {
                         ) : isError ? (
                             <Typography variant="body1">Error fetching programs. Please try again later.</Typography>
                         ) : (
+                            <>
+                                {filteredOngoingPrograms && filteredOngoingPrograms.length > 0 ? (
+                                    <Table>
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>Program Name</TableCell>
+                                                <TableCell>Start Date</TableCell>
+                                                <TableCell>Time</TableCell>
+                                                <TableCell>Actions</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {filteredOngoingPrograms?.map((program) => (
+                                                <TableRow key={program.id}>
+                                                    <TableCell>{program.name}</TableCell>
+                                                    <TableCell>{new Date(program.startDate).toLocaleDateString()}</TableCell>
+                                                    <TableCell>{formatTimeTo12Hour(program.startTime)}</TableCell>
+                                                    <TableCell>
+                                                        <Button
+                                                            variant="contained"
+                                                            color="secondary"
+                                                            onClick={() => handleViewSubmissions(program.id)}
+                                                        >
+                                                            View Submissions
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                ) : (
+                                    <Alert severity="info">There are no upcoming programs.</Alert>
+                                )}
+                            </>
+                        )}
+                    </TableContainer>
+                    <br />
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Typography variant="h6">Past Programs</Typography>
+                    <TextField
+                        placeholder="Search"
+                        variant="outlined"
+                        margin="normal"
+                        value={searchPast}
+                        onChange={(e) => setSearchPast(e.target.value)}
+                        size="small"
+                    />
+                    </Stack>
+                    <TableContainer component={Paper}>
+                        {filteredPastPrograms && filteredPastPrograms.length > 0 ? (
                             <Table>
                                 <TableHead>
                                     <TableRow>
@@ -122,7 +172,7 @@ export default function VerifySubmission() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {filteredOngoingPrograms?.map((program) => (
+                                    {filteredPastPrograms?.map((program) => (
                                         <TableRow key={program.id}>
                                             <TableCell>{program.name}</TableCell>
                                             <TableCell>{new Date(program.startDate).toLocaleDateString()}</TableCell>
@@ -140,49 +190,9 @@ export default function VerifySubmission() {
                                     ))}
                                 </TableBody>
                             </Table>
+                        ) : (
+                            <Alert severity="info">There are no past programs.</Alert>
                         )}
-                    </TableContainer>
-                    <br />
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h6">Past Programs</Typography>
-                    <TextField
-                        placeholder="Search"
-                        variant="outlined"
-                        margin="normal"
-                        value={searchPast}
-                        onChange={(e) => setSearchPast(e.target.value)}
-                        size="small"
-                    />
-                    </Stack>
-                    <TableContainer component={Paper}>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Program Name</TableCell>
-                                    <TableCell>Start Date</TableCell>
-                                    <TableCell>Time</TableCell>
-                                    <TableCell>Actions</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {filteredPastPrograms?.map((program) => (
-                                    <TableRow key={program.id}>
-                                        <TableCell>{program.name}</TableCell>
-                                        <TableCell>{new Date(program.startDate).toLocaleDateString()}</TableCell>
-                                        <TableCell>{formatTimeTo12Hour(program.startTime)}</TableCell>
-                                        <TableCell>
-                                            <Button
-                                                variant="contained"
-                                                color="secondary"
-                                                onClick={() => handleViewSubmissions(program.id)}
-                                            >
-                                                View Submissions
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
                     </TableContainer>
                     <Modal
                         open={!!selectedProgram}
