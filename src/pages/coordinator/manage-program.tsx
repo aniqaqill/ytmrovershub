@@ -202,12 +202,11 @@ const handleConfirmDelete = async () => {
                 <Stack direction="row" justifyContent="space-between">
                 <Typography variant="h6" margin={2}>Past Programs</Typography>
                 <TextField
-                  placeholder="Search"
+                  placeholder="Search by Name"
                   variant="outlined"
                   value={pastSearchQuery}
                   onChange={(e) => setPastSearchQuery(e.target.value)}
                   size="small"
-                  style={{ margin: 10 }}
                 />
               </Stack>
                 <Table size="small">
