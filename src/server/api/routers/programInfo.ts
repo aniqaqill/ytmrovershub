@@ -135,10 +135,10 @@ export const programInfoRouter = createTRPCRouter({
       if (!existingMaterial) {
         throw new Error(`Material with ID ${material.id} not found`);
       }
-
-      if (existingMaterial.quantity < material.quantity) {
-        throw new Error(`Not enough quantity for material ID ${material.id}`);
-      }
+      //fix this the quantity is shoudl just replace the quantity used in the programAidMaterial 
+      // if (existingMaterial.quantity < material.quantity) {
+      //   throw new Error(`Not enough quantity for material ID ${material.id}`);
+      // }
     }
 
     const updatedProgram = await prisma.program.update({
