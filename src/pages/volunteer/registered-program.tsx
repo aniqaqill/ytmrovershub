@@ -79,16 +79,32 @@ export default function Page() {
     const now = new Date();
     const eventDate = new Date(program.startDate);
     const [startHours, startMinutes] = program.startTime.split(":").map(Number);
-    eventDate.setHours(startHours!);
-    eventDate.setMinutes(startMinutes!);
-
-    if (now >= eventDate) {
+    
+    // Use default values for hours and minutes in case they are undefined
+    const hours = startHours ?? 0;
+    const minutes = startMinutes ?? 0;
+  
+    eventDate.setHours(hours);
+    eventDate.setMinutes(minutes);
+  
+    // Set eventDate to one day before the actual start date
+    const openDate = new Date(eventDate);
+    openDate.setDate(eventDate.getDate() - 1);
+  
+    // Check if the current time is within the range starting one day before the event
+    const endDate = new Date(program.startDate);
+    const [endHours, endMinutes] = program.endTime.split(":").map(Number);
+    endDate.setHours(endHours ?? 0, endMinutes ?? 0);
+  
+    if (now >= openDate && now <= endDate) {
       setSelectedProgram(program);
       setOpenForm(true);
     } else {
       setShowAlert(true);
     }
   };
+  
+  
 
   const handleFormClose = () => {
     setOpenForm(false);

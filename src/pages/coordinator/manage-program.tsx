@@ -75,32 +75,31 @@ export default function Page() {
     setIsConfirmationOpen(true);
   };
 
-const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async () => {
+    try {
+      // Check if the image is not empty before attempting to delete it from S3
+      if (programToDelete?.image) {
+        const deleteParams = {
+          Bucket: "program_media", // Replace with your S3 bucket name
+          Key: programToDelete?.image,
+        };
+        const deleteCommand = new DeleteObjectCommand(deleteParams);
+        await s3Client.send(deleteCommand);
 
-  try {
-    // Check if the image is not empty before attempting to delete it from S3
-    if (programToDelete?.image) {
-      const deleteParams = {
-        Bucket: "program_media", // Replace with your S3 bucket name
-        Key: programToDelete?.image,
-      };
-      const deleteCommand = new DeleteObjectCommand(deleteParams);
-      await s3Client.send(deleteCommand);
+        console.log('Image deleted successfully from S3');
+      }
 
-      console.log('Image deleted successfully from S3');
+      // Delete the program from the database
+      await deleteProgram.mutateAsync({ id: programToDelete?.id ?? "" });
+      console.log('Program deleted successfully from the database');
+
+      setIsConfirmationOpen(false);
+      await refetchPrograms();
+      setSnackbarOpen(true); // Show the snackbar on successful deletion
+    } catch (error) {
+      console.error('Error during deletion process:', error);
     }
-
-    // Delete the program from the database
-    await deleteProgram.mutateAsync({ id: programToDelete?.id ?? "" });
-    console.log('Program deleted successfully from the database');
-
-    setIsConfirmationOpen(false);
-    await refetchPrograms();
-    setSnackbarOpen(true); // Show the snackbar on successful deletion
-  } catch (error) {
-    console.error('Error during deletion process:', error);
-  }
-};
+  };
 
   const handleCancelDelete = () => {
     setIsConfirmationOpen(false);
@@ -122,8 +121,11 @@ const handleConfirmDelete = async () => {
 
   // Filter programs into upcoming and past
   const currentDate = new Date();
-  const upcomingPrograms = programs?.filter(program => new Date(program.startDate) >= currentDate);
-  const pastPrograms = programs?.filter(program => new Date(program.startDate) < currentDate);
+  const pastCutoffDate = new Date();
+  pastCutoffDate.setDate(currentDate.getDate() - 2);
+
+  const upcomingPrograms = programs?.filter(program => new Date(program.startDate) >= pastCutoffDate);
+  const pastPrograms = programs?.filter(program => new Date(program.startDate) < pastCutoffDate);
 
   // Filter programs based on search queries
   const filteredUpcomingPrograms = upcomingPrograms?.filter(program =>
@@ -162,6 +164,7 @@ const handleConfirmDelete = async () => {
                   value={upcomingSearchQuery}
                   onChange={(e) => setUpcomingSearchQuery(e.target.value)}
                   size="small"
+                  margin="normal"
                 />
               </Stack>
                 <Table size="small">
@@ -207,6 +210,7 @@ const handleConfirmDelete = async () => {
                   value={pastSearchQuery}
                   onChange={(e) => setPastSearchQuery(e.target.value)}
                   size="small"
+                  margin="normal"
                 />
               </Stack>
                 <Table size="small">
