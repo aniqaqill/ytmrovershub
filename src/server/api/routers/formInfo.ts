@@ -37,7 +37,6 @@ export const formInfoRouter = createTRPCRouter({
       return form?.status ?? null;
     }),
   
-
   //by Form Itself
   getFormById: protectedProcedure
     .input(z.object({ id: z.string() }))
@@ -79,5 +78,13 @@ export const formInfoRouter = createTRPCRouter({
       return forms;
     }),
 
-
+    getAllForms: protectedProcedure.query(async () => {
+      const forms = await prisma.form.findMany({
+        include: {
+          user: true,
+        },
+      });
+      return forms;
+    }),
+   
 });

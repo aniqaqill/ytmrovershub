@@ -193,7 +193,7 @@ export default function Page() {
                                   <Typography variant="body1">Location: {program.location}</Typography>
                                 </CardContent>
                                 <Box mt="auto" p={2}>
-                                  <Button variant="contained" onClick={() => handleViewMore(program)}>View More</Button>
+                                  <Button color="secondary" variant="contained" onClick={() => handleViewMore(program)}>View More</Button>
                                 </Box>
                               </Card>
                             </Grid>

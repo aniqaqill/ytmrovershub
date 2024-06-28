@@ -269,12 +269,13 @@ export default function CreateProgram() {
                 </FormControl>
               </Grid>
               <Grid item xs={12}>
-                <FormControl fullWidth>
+                <FormControl>
                   <Typography variant="body2">Program Image</Typography>
                   <Button
                     component="label"
-                    variant="contained"
+                    variant="text"
                     startIcon={<CloudUploadIcon />}
+                     color="secondary"
                   >
                     Upload file
                     <VisuallyHiddenInput
@@ -312,7 +313,7 @@ export default function CreateProgram() {
 
               </Grid>
               <Grid item xs={12}>
-                <Button type="submit" variant="contained">Create Program</Button>
+                <Button type="submit" color="secondary" variant="contained">Create Program</Button>
               </Grid>
             </Grid>
           </Box>

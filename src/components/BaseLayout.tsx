@@ -26,6 +26,7 @@ import { useRouter } from "next/router";
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import { Logout, PeopleAltRounded } from "@mui/icons-material";
+import AnalyticsIcon from '@mui/icons-material/Analytics';
 import { api } from "~/utils/api";
 import Link from "next/link";
 
@@ -101,6 +102,7 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
         { text: 'Manage Program', icon: <AllInboxIcon />, onClick: () => router.push('/coordinator/manage-program') },
         { text: 'Aid Material', icon: <InventoryIcon />, onClick: () => router.push('/coordinator/manage-material') },
         { text: 'Verify Submission', icon: <FactCheckIcon/>, onClick: () => router.push('/coordinator/verification-program-list')},
+        { text: 'Analytics', icon: <AnalyticsIcon />, onClick: () => router.push('/coordinator/analytics')},
         { text: 'Profile', icon: <PersonIcon  />, onClick: () => router.push('/profile') }
 
       ],

@@ -50,7 +50,7 @@ export const programInfoRouter = createTRPCRouter({
               aidMaterial: true
             }
           },
-          volunteers: true // Include volunteers to count the number of registered volunteers
+          volunteers: true 
         }
       });
       return program;
@@ -101,80 +101,127 @@ export const programInfoRouter = createTRPCRouter({
   }),
 
   updateProgramById: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-      name: z.string(),
-      description: z.string(),
-      startDate: z.string(),
-      startTime: z.string(),
-      endTime: z.string(),
-      coordinatorId: z.string(),
-      location: z.string(),
-      maxVolunteer: z.number(),
-      image: z.string(),
-      materials: z.array(z.object({
-        id: z.string(),
-        quantity: z.number(),
-      }))
-    }))
-    .mutation(async ({ input }) => {
-      // Start a transaction to ensure atomicity
-      const program = await prisma.$transaction(async (prisma) => {
-        const updatedProgram = await prisma.program.update({
-          where: { id: input.id },
-          data: {
-            name: input.name,
-            description: input.description,
-            startDate: new Date(input.startDate),
-            startTime: input.startTime,
-            endTime: input.endTime,
-            coordinatorId: input.coordinatorId,
-            location: input.location,
-            maxVolunteer: input.maxVolunteer,
-            image: input.image,
+.input(z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  startDate: z.string(),
+  startTime: z.string(),
+  endTime: z.string(),
+  coordinatorId: z.string(),
+  location: z.string(),
+  maxVolunteer: z.number(),
+  image: z.string(),
+  materials: z.array(z.object({
+    id: z.string(),
+    quantity: z.number(),
+  }))
+}))
+.mutation(async ({ input }) => {
+  return await prisma.$transaction(async (prisma) => {
+    const program = await prisma.program.findUnique({
+      where: { id: input.id }
+    });
+
+    if (!program) {
+      throw new Error(`Program with ID ${input.id} not found`);
+    }
+
+    for (const material of input.materials) {
+      const existingMaterial = await prisma.aidMaterial.findUnique({
+        where: { id: material.id }
+      });
+
+      if (!existingMaterial) {
+        throw new Error(`Material with ID ${material.id} not found`);
+      }
+    }
+
+    const updatedProgram = await prisma.program.update({
+      where: { id: input.id },
+      data: {
+        name: input.name,
+        description: input.description,
+        startDate: new Date(input.startDate),
+        startTime: input.startTime,
+        endTime: input.endTime,
+        coordinatorId: input.coordinatorId,
+        location: input.location,
+        maxVolunteer: input.maxVolunteer,
+        image: input.image,
+      }
+    });
+
+    const existingMaterials = await prisma.programAidMaterial.findMany({
+      where: { programId: input.id }
+    });
+
+    for (const existingMaterial of existingMaterials) {
+      await prisma.aidMaterial.update({
+        where: { id: existingMaterial.aidMaterialId },
+        data: {
+          quantity: {
+            increment: existingMaterial.quantityUsed
           }
-        });
-
-        // First, remove existing material relationships
-        await prisma.programAidMaterial.deleteMany({
-          where: { programId: input.id }
-        });
-
-        for (const material of input.materials) {
-          // Update the aid material quantity
-          await prisma.aidMaterial.update({
-            where: { id: material.id },
-            data: {
-              quantity: {
-                decrement: material.quantity
-              }
-            }
-          });
-
-          // Create the new ProgramAidMaterial relationship
-          await prisma.programAidMaterial.create({
-            data: {
-              programId: updatedProgram.id,
-              aidMaterialId: material.id,
-              quantityUsed: material.quantity
-            }
-          });
         }
+      });
+    }
 
-        return updatedProgram;
+    await prisma.programAidMaterial.deleteMany({
+      where: { programId: input.id }
+    });
+
+    for (const material of input.materials) {
+      await prisma.aidMaterial.update({
+        where: { id: material.id },
+        data: {
+          quantity: {
+            decrement: material.quantity
+          }
+        }
       });
 
-      return program;
-    }),
-
-  deleteProgramById: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ input }) => {
-      const program = await prisma.program.delete({
-        where: { id: input.id },
+      await prisma.programAidMaterial.create({
+        data: {
+          programId: updatedProgram.id,
+          aidMaterialId: material.id,
+          quantityUsed: material.quantity
+        }
       });
-      return program;
-    }),
+    }
+
+    return updatedProgram;
+  });
+}),
+
+deleteProgramById: protectedProcedure
+  .input(z.object({ id: z.string() }))
+  .mutation(async ({ input }) => {
+    // Delete related program aid materials
+    await prisma.programAidMaterial.deleteMany({
+      where: { programId: input.id },
+    });
+
+    // Delete related volunteer programs
+    await prisma.volunteerProgram.deleteMany({
+      where: { programId: input.id },
+    });
+
+      //Delete the form
+      await prisma.form.deleteMany({
+        where: { programId: input.id },
+      });
+      
+
+    // Delete the program
+    const program = await prisma.program.delete({
+      where: { id: input.id },
+    });
+
+  
+
+    return program;
+  }),
 
   registerVolunteer: protectedProcedure
     .input(RegisterInput)
