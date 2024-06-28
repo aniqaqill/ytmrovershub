@@ -3,8 +3,7 @@ import {
   Button, Dialog, DialogTitle, DialogContent, DialogActions,
   Divider, Table, TableBody, TableCell, TableHead, TableRow,
   Typography, CircularProgress, Tooltip, Snackbar, Alert,
-  Stack,
-  Backdrop
+  Stack, Backdrop, TextField
 } from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
@@ -14,8 +13,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PreviewIcon from '@mui/icons-material/Preview';
 import ViewDetailProgram from "~/components/program/view-detail-program";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3"; 
-import  s3Client  from "../api/storage/s3";
-
+import s3Client from "../api/storage/s3";
 
 interface ProgramType {
   id: string;
@@ -28,21 +26,30 @@ interface ProgramType {
   maxVolunteer: number;
   coordinatorId: string;
   image: string;
+  materials: { id: string; quantityUsed: number }[]; // Ensure materials is included
 }
 
 export default function Page() {
   const { data: sessionData } = useSession();
-  const isLoggedInCoordinator = useMemo(() => {
-    return sessionData?.user && sessionData.user.role === "coordinator";
-  }, [sessionData]);
+  const isLoggedInCoordinator = useMemo(() => { return sessionData?.user && sessionData.user.role === "coordinator";}, [sessionData]);
   const [selectedProgram, setSelectedProgram] = useState<ProgramType | null>(null);
   const [programToDelete, setProgramToDelete] = useState<ProgramType | null>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const { data: programs, isLoading, isError, refetch: refetchPrograms } = api.programInfo.getAllProgram.useQuery();
   const deleteProgram = api.programInfo.deleteProgramById.useMutation();
+  const [upcomingSearchQuery, setUpcomingSearchQuery] = useState("");
+  const [pastSearchQuery, setPastSearchQuery] = useState("");
 
- 
+  useEffect(() => {
+    if (!isLoggedInCoordinator) {
+      const timer = setTimeout(() => {
+        window.location.href = "/";
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedInCoordinator]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -69,20 +76,21 @@ export default function Page() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!programToDelete) return;
     try {
-      // Start deletion process
-      const deleteParams = {
-        Bucket: "program_media", // Replace with your S3 bucket name
-        Key: programToDelete.image,
-      };
-      const deleteCommand = new DeleteObjectCommand(deleteParams);
-      await s3Client.send(deleteCommand);
+      // Check if the image is not empty before attempting to delete it from S3
+      if (programToDelete?.image) {
+        const deleteParams = {
+          Bucket: "program_media", // Replace with your S3 bucket name
+          Key: programToDelete?.image,
+        };
+        const deleteCommand = new DeleteObjectCommand(deleteParams);
+        await s3Client.send(deleteCommand);
 
-      console.log('Image deleted successfully from S3');
+        console.log('Image deleted successfully from S3');
+      }
 
       // Delete the program from the database
-      await deleteProgram.mutateAsync({ id: programToDelete.id });
+      await deleteProgram.mutateAsync({ id: programToDelete?.id ?? "" });
       console.log('Program deleted successfully from the database');
 
       setIsConfirmationOpen(false);
@@ -104,7 +112,6 @@ export default function Page() {
 
   // Helper function to format the date
   const formatDate = (dateString: Date) => {
-    // format the date to a more readable format which is dd/mm/yyyy
     const date = new Date(dateString);
     const day = date.getDate();
     const month = date.getMonth() + 1;
@@ -112,100 +119,170 @@ export default function Page() {
     return `${day}/${month}/${year}`;
   };
 
+  // Filter programs into upcoming and past
+  const currentDate = new Date();
+  const pastCutoffDate = new Date();
+  pastCutoffDate.setDate(currentDate.getDate() - 2);
+
+  const upcomingPrograms = programs?.filter(program => new Date(program.startDate) >= pastCutoffDate);
+  const pastPrograms = programs?.filter(program => new Date(program.startDate) < pastCutoffDate);
+
+  // Filter programs based on search queries
+  const filteredUpcomingPrograms = upcomingPrograms?.filter(program =>
+    program.name.toLowerCase().includes(upcomingSearchQuery.toLowerCase())
+  );
+
+  const filteredPastPrograms = pastPrograms?.filter(program =>
+    program.name.toLowerCase().includes(pastSearchQuery.toLowerCase())
+  );
+
   return (
     <div>
       <BaseLayout pageIndex={1}>
         {isLoggedInCoordinator ? (
           <>
-            <Typography variant="h5" margin={2}>Manage Programs</Typography>
+            <Typography variant="h4" margin={2}>Manage Programs</Typography>
             <Divider />
             <br />
             <Link href="/coordinator/create-program">
-              <Button variant="contained" color="secondary"> Create New Program </Button>
+              <Button variant="contained" color="secondary">Create New Program</Button>
             </Link>
             <br />
-            <br />  
             {isLoading ? (
-               <Backdrop open>
+              <Backdrop open>
                 <CircularProgress />
               </Backdrop>
             ) : isError ? (
               <Typography variant="body1">Error fetching programs. Please try again later.</Typography>
             ) : (
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Program Name</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                {(programs?.length ?? 0) > 0 ? (
-                    programs?.map((program) => (
-                      <TableRow key={program.id}>
-                        <TableCell>{program.name}</TableCell>
-                        <TableCell>{program.location}</TableCell>
-                        <TableCell>
-                          {formatDate(program.startDate)}
-                        </TableCell>
-                        <TableCell>
-                          <Tooltip title="View Program">
-                            <Button color="secondary" onClick={() => handleViewProgram(program)}><PreviewIcon /></Button>
-                          </Tooltip>
-                          <Tooltip title="Delete Program">
-                            <Button onClick={() => handleOpenConfirmation(program)}><DeleteIcon color="error" /></Button>
-                          </Tooltip>
+              <>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="h6" margin={2}>Upcoming Programs</Typography>
+                <TextField
+                  placeholder="Search by Name"
+                  variant="outlined"
+                  value={upcomingSearchQuery}
+                  onChange={(e) => setUpcomingSearchQuery(e.target.value)}
+                  size="small"
+                  margin="normal"
+                />
+              </Stack>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Program Name</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(filteredUpcomingPrograms?.length ?? 0) > 0 ? (
+                      filteredUpcomingPrograms?.map((program) => (
+                        <TableRow key={program.id}>
+                          <TableCell>{program.name}</TableCell>
+                          <TableCell>{program.location}</TableCell>
+                          <TableCell>{formatDate(program.startDate)}</TableCell>
+                          <TableCell>
+                            <Tooltip title="View Program">
+                              <Button color="secondary" onClick={() => handleViewProgram(program)}><PreviewIcon /></Button>
+                            </Tooltip>
+                            <Tooltip title="Delete Program">
+                              <Button onClick={() => handleOpenConfirmation(program)}><DeleteIcon color="error" /></Button>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">
+                          <Alert severity="info">There are no upcoming programs.</Alert>
                         </TableCell>
                       </TableRow>
-                    ))
-                  ) : (
+                    )}
+                  </TableBody>
+                </Table>
+                <Stack direction="row" justifyContent="space-between">
+                <Typography variant="h6" margin={2}>Past Programs</Typography>
+                <TextField
+                  placeholder="Search by Name"
+                  variant="outlined"
+                  value={pastSearchQuery}
+                  onChange={(e) => setPastSearchQuery(e.target.value)}
+                  size="small"
+                  margin="normal"
+                />
+              </Stack>
+                <Table size="small">
+                  <TableHead>
                     <TableRow>
-                      <TableCell colSpan={4} align="center">
-                      <Alert severity="info">There are no program created and available yet.</Alert>
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Program Name</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHead>
+                  <TableBody>
+                    {(filteredPastPrograms?.length ?? 0) > 0 ? (
+                      filteredPastPrograms?.map((program) => (
+                        <TableRow key={program.id}>
+                          <TableCell>{program.name}</TableCell>
+                          <TableCell>{program.location}</TableCell>
+                          <TableCell>{formatDate(program.startDate)}</TableCell>
+                          <TableCell>
+                            <Tooltip title="View Program">
+                              <Button color="secondary" onClick={() => handleViewProgram(program)}><PreviewIcon /></Button>
+                            </Tooltip>
+                            <Tooltip title="Delete Program">
+                              <Button onClick={() => handleOpenConfirmation(program)}><DeleteIcon color="error" /></Button>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">
+                          <Alert severity="info">There are no past programs.</Alert>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </>
             )}
+            <Dialog open={isConfirmationOpen} onClose={handleCancelDelete}>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+              <DialogContent>
+                <Typography>Are you sure you want to delete the program {programToDelete?.name} ?</Typography>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleCancelDelete}>Cancel</Button>
+                <Button onClick={handleConfirmDelete} color="error">Confirm</Button>
+              </DialogActions>
+            </Dialog>
+            <Dialog open={selectedProgram !== null} onClose={handleCloseModal}>
+              <DialogTitle>Program Detail</DialogTitle>
+              <DialogContent>
+                {selectedProgram && (
+                  <ViewDetailProgram program={selectedProgram}  />
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleCloseModal}>Close</Button>
+              </DialogActions>
+            </Dialog>
+            <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleSnackbarClose}>
+              <Alert onClose={handleSnackbarClose} severity="success">
+                Program deleted successfully.
+              </Alert>
+            </Snackbar>
           </>
         ) : (
-          <Typography variant="body1">You are not authorized to access this page.</Typography>
+          <Backdrop open>
+            <CircularProgress />
+          </Backdrop>
         )}
       </BaseLayout>
-
-      {/* Render the ViewDetailProgram component inside a dialog */}
-      <Dialog fullWidth={true} maxWidth="md" open={!!selectedProgram} onClose={handleCloseModal}>
-        <DialogTitle><Stack direction="row" justifyContent="space-between">
-          <Typography variant="h5">{selectedProgram?.name}&apos;s Program</Typography>
-          <Button onClick={handleCloseModal}>Close</Button>
-        </Stack>
-        </DialogTitle>
-        <DialogContent>
-          {selectedProgram && <ViewDetailProgram program={selectedProgram} />}
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmation dialog for deleting a program */}
-      <Dialog fullWidth={true} maxWidth="md" open={isConfirmationOpen} onClose={handleCancelDelete}>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <Typography>Are you sure you want to delete this program?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelDelete}>Cancel</Button>
-          <Button onClick={handleConfirmDelete} color="error">Delete</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar for successful deletion */}
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
-        <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: '100%' }}>
-          Program deleted successfully!
-        </Alert>
-      </Snackbar>
     </div>
   );
 }

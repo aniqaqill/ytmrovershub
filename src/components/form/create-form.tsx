@@ -119,6 +119,8 @@ const CreateForm: React.FC<CreateFormProps> = ({ program, onClose }) => {
       <DialogContent>
         <Typography>
           Your submission has been approved. Thank you for your participation!
+          <br />
+          Please check your email. A certificate of participation has been sent to you.
         </Typography>
       </DialogContent>
       </>
@@ -161,12 +163,13 @@ const CreateForm: React.FC<CreateFormProps> = ({ program, onClose }) => {
          required
        />
      </FormControl>
-     <FormControl fullWidth margin="normal">
-       <FormLabel>Upload Images</FormLabel>
+     <FormControl margin="normal">
+       <FormLabel>Upload Images (For Verification )</FormLabel>
        <Button
          component="label"
-         variant="contained"
+         variant="text"
          startIcon={<CloudUploadIcon />}
+         color="secondary"
        >
          Upload file
          <VisuallyHiddenInput
@@ -198,7 +201,7 @@ const CreateForm: React.FC<CreateFormProps> = ({ program, onClose }) => {
      </FormControl>
      <DialogActions>
        <Button color="error" onClick={onClose}>Cancel</Button>
-       <Button onClick={handleSubmitClick} variant="contained" color="primary">
+       <Button color="secondary" onClick={handleSubmitClick} variant="contained" >
          Submit
        </Button>
      </DialogActions>

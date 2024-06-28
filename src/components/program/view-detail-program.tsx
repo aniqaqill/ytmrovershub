@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect} from "react";
 import {
   Grid,
   Table,
@@ -21,14 +21,11 @@ import {
 } from "@mui/material";
 import { api } from "~/utils/api";
 import Image from "next/image";
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {  PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
-import { env } from "~/env";
+import s3Client  from "../../pages/api/storage/s3";
 import  imageEndpoint  from  "../../pages/api/storage/publicEndpoint"
-
-
-
 
 interface ProgramType {
   id: string;
@@ -41,6 +38,7 @@ interface ProgramType {
   maxVolunteer: number;
   coordinatorId: string;
   image: string;
+  materials: { id: string; quantityUsed: number }[];
 }
 
 
@@ -97,16 +95,8 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
   const updateProgram = api.programInfo.updateProgramById.useMutation();
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  
 
-  const s3Client = useMemo(() => new S3Client({
-    forcePathStyle: true,
-    region: "ap-southeast-1",
-    endpoint: env.NEXT_PUBLIC_s3_endpoint,
-    credentials: {
-      accessKeyId: env.NEXT_PUBLIC_s3_access_key,
-      secretAccessKey: env.NEXT_PUBLIC_s3_secret_access,
-    },
-  }), []);
 
   useEffect(() => {
     setEditedProgram(program);
@@ -140,16 +130,20 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
   const handleSaveClick = async () => {
     try {
       if (!editedProgram) return;
+  
+      const editedMaterials = fullProgramInfo?.materials.map((material) => ({
+        id: material.aidMaterialId,
+        quantity: editedProgram.materials.find((m) => m.id === material.aidMaterialId)?.quantityUsed ?? material.quantityUsed,
+      })) ?? [];
+  
       const editedProgramAsString = {
         ...editedProgram,
         startDate: editedProgram.startDate.toISOString(),
-        maxVolunteer: Number(editedProgram.maxVolunteer), // Ensure maxVolunteer is a number
-        materials: []
+        maxVolunteer: Number(editedProgram.maxVolunteer),
+        materials: editedMaterials,
       };
   
-      // Check if a file is selected for upload
       if (file) {
-        // If there is an old image, delete it from storage
         if (program.image) {
           const deleteObjectCommand = new DeleteObjectCommand({
             Bucket: "program_media",
@@ -158,7 +152,6 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
           await s3Client.send(deleteObjectCommand);
         }
   
-        // Upload the new image to storage
         const key = `program/${file.name}`;
         const putObjectCommand = new PutObjectCommand({
           Bucket: "program_media",
@@ -167,29 +160,17 @@ export default function ViewDetailProgram(props: ViewDetailProgramProps) {
           ContentType: file.type,
         });
         await s3Client.send(putObjectCommand);
-  
-        // Update the program data with the URL or key of the new image
         editedProgramAsString.image = key;
       }
   
-      // Perform the update operation
       await updateProgram.mutateAsync(editedProgramAsString);
-  
-      // Reset the file state
       setFile(null);
-  
-      // Close the confirmation dialog and update state
       setIsEditing(false);
       setIsConfirmationOpen(false);
-  
-      // Refetch updated data
       await refetchProgram();
-  
-      // Show success message
       setSnackbarOpen(true);
     } catch (error) {
       console.error("Error updating program:", error);
-      // Handle error as needed
     }
   };
   

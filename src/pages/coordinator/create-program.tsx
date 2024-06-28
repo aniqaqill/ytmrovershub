@@ -49,12 +49,20 @@ export default function CreateProgram() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const router = useRouter();
   const materials =  api.materialInfo.getAllAidMaterial.useQuery().data;
+  const isLoggedInCoordinator = useMemo(() => { return sessionData?.user && sessionData.user.role === "coordinator"; }, [sessionData]);
+  
+  useEffect(() => {
+    if (!isLoggedInCoordinator) {
+        const timer = setTimeout(() => {
+          window.location.href = "/";
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+}, [isLoggedInCoordinator]);
 
 
   useEffect(() => {
     const fetchMaterials = async () => {
-
-      
       if (materials) {
         setAvailableMaterials(materials);
       }
@@ -63,10 +71,6 @@ export default function CreateProgram() {
   }, [materials]);
   
     
-
-  const isLoggedInCoordinator = useMemo(() => {
-    return sessionData?.user && sessionData.user.role === "coordinator";
-  }, [sessionData]);
 
   const coordinatorId = sessionData?.user?.id ?? "";
   const createProgram = api.programInfo.createProgram.useMutation();
@@ -265,12 +269,13 @@ export default function CreateProgram() {
                 </FormControl>
               </Grid>
               <Grid item xs={12}>
-                <FormControl fullWidth>
+                <FormControl>
                   <Typography variant="body2">Program Image</Typography>
                   <Button
                     component="label"
-                    variant="contained"
+                    variant="text"
                     startIcon={<CloudUploadIcon />}
+                     color="secondary"
                   >
                     Upload file
                     <VisuallyHiddenInput
@@ -308,7 +313,7 @@ export default function CreateProgram() {
 
               </Grid>
               <Grid item xs={12}>
-                <Button type="submit" variant="contained">Create Program</Button>
+                <Button type="submit" color="secondary" variant="contained">Create Program</Button>
               </Grid>
             </Grid>
           </Box>

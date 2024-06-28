@@ -18,7 +18,6 @@ export default function Page() {
     contactNumber: "",
   });
   const [isUpdating, setIsUpdating] = useState(false);
-  // const [updateSuccess, setUpdateSuccess] = useState(false);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const { data: userData ,refetch: refetchUser  } = api.userInfo.getUserById.useQuery({
@@ -47,12 +46,12 @@ export default function Page() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsConfirmationOpen(true); // Open confirmation modal
+    setIsConfirmationOpen(true);
   };
 
   const handleConfirmUpdate = async () => {
     setIsUpdating(true);
-    setIsConfirmationOpen(false); // Close confirmation modal
+    setIsConfirmationOpen(false);
     try {
       const userId = sessionData?.user.id;
       if (!userId) {
@@ -80,14 +79,14 @@ export default function Page() {
   };
 
   // Check if the user is authenticated and has the "volunteer" or "coordinator" role
-  const isLoggedInVolunteer =
+  const isLoggedIn =
     sessionData?.user &&
-    (sessionData.user.role === "volunteer" || sessionData.user.role === "coordinator");
+    (sessionData.user.role === "volunteer" || sessionData.user.role === "coordinator" || sessionData.user.role === "admin");
 
   return (
     <div>
       <BaseLayout pageIndex={1}>
-        {isLoggedInVolunteer ? (
+        {isLoggedIn ? (
           <>
             <Typography variant="h5">User Profile</Typography>
             <form onSubmit={handleSubmit}>
@@ -109,6 +108,7 @@ export default function Page() {
                 fullWidth
                 margin="normal"
                 required
+                disabled
               />
               <TextField
                 label="Contact Number"

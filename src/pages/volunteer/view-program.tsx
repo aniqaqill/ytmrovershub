@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Card,Typography,Grid,CardContent,Divider, CardMedia,Alert,Button,Modal,Box,Snackbar,Backdrop,CircularProgress,} from "@mui/material";
+import {
+  Card, Typography, Grid, CardContent, Divider, CardMedia, Alert,
+  Button, Modal, Box, Snackbar, Backdrop, CircularProgress,
+} from "@mui/material";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
@@ -16,7 +19,7 @@ interface ProgramType {
   maxVolunteer: number;
   coordinatorId: string;
   image: string;
-  volunteers: { userId: string; programId: string }[]; 
+  volunteers: { userId: string; programId: string }[];
 }
 
 export default function Page() {
@@ -30,6 +33,15 @@ export default function Page() {
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isFull, setIsFull] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!isLoggedInVolunteer) {
+      const timer = setTimeout(() => {
+        window.location.href = "/";
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedInVolunteer]);
 
   useEffect(() => {
     if (selectedProgram) {
@@ -56,9 +68,6 @@ export default function Page() {
   const handleCloseModal = () => {
     setSelectedProgram(null);
   };
-
-
-
 
   const formatTimeTo12Hour = (time24: string) => {
     const [hoursStr, minutes] = time24.split(":");
@@ -112,11 +121,11 @@ export default function Page() {
       <BaseLayout pageIndex={1}>
         {isLoggedInVolunteer ? (
           <>
-            <Typography variant="h5" gutterBottom>Programs</Typography>
+            <Typography variant="h4" gutterBottom >Programs</Typography>
             <Divider />
             {getAllProgramsQuery.isLoading ? (
               <Backdrop open>
-                  <CircularProgress />
+                <CircularProgress />
               </Backdrop>
             ) : getAllProgramsQuery.error ? (
               <Alert severity="error">Error fetching programs. Please try again later.</Alert>
@@ -125,56 +134,86 @@ export default function Page() {
                 {getAllProgramsQuery.data && getAllProgramsQuery.data.length === 0 ? (
                   <Alert severity="info">There are no programs available.</Alert>
                 ) : (
-                  <Grid container spacing={3} mt={2}>
-                    {getAllProgramsQuery.data
-                      ?.filter(isProgramInFuture)
-                      .map((program) => {
-                        const daysLeft = getDaysLeft(program);
-                        const isFull = program.volunteers.length >= program.maxVolunteer;
+                  <>
+                    <Typography variant="h6" mt={2}>Upcoming Programs</Typography>
+                    <Grid container spacing={3} mt={2}>
+                      {getAllProgramsQuery.data
+                        ?.filter(isProgramInFuture)
+                        .map((program) => {
+                          const daysLeft = getDaysLeft(program);
+                          const isFull = program.volunteers.length >= program.maxVolunteer;
 
-                        return (
+                          return (
+                            <Grid item xs={12} sm={6} md={4} key={program.id}>
+                              <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                <Box sx={{ position: 'relative' }}>
+                                  <CardMedia
+                                    component="img"
+                                    height="200"
+                                    image={imageEndpoint() + program.image}
+                                    alt="program image"
+                                  />
+                                  {!isFull && daysLeft < 7 && (
+                                    <Alert
+                                      severity="warning"
+                                      sx={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        boxSizing: 'border-box',
+                                        borderRadius: 0,
+                                        opacity: 0.8,
+                                      }}
+                                    >
+                                      {daysLeft} {daysLeft === 1 ? "day" : "days"} left to register for the program
+                                    </Alert>
+                                  )}
+                                  {isFull && (
+                                    <Alert
+                                      severity="error"
+                                      sx={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        right: 0,
+                                        width: '100%',
+                                        boxSizing: 'border-box',
+                                        borderRadius: 0,
+                                        opacity: 0.8,
+                                      }}
+                                    >
+                                      The program has reached its maximum number of volunteers
+                                    </Alert>
+                                  )}
+                                </Box>
+                                <CardContent>
+                                  <Typography variant="h6" gutterBottom>{program.name}</Typography>
+                                  <Typography variant="body1">Date: {program.startDate ? formatDate(program.startDate) : "N/A"}</Typography>
+                                  <Typography variant="body1">Time: {formatTimeTo12Hour(program.startTime)} - {formatTimeTo12Hour(program.endTime)}</Typography>
+                                  <Typography variant="body1">Location: {program.location}</Typography>
+                                </CardContent>
+                                <Box mt="auto" p={2}>
+                                  <Button color="secondary" variant="contained" onClick={() => handleViewMore(program)}>View More</Button>
+                                </Box>
+                              </Card>
+                            </Grid>
+                          );
+                        })}
+                    </Grid>
+
+                    <Typography variant="h6" mt={2}>Past Programs</Typography>
+                    <Grid container spacing={3} mt={2}>
+                      {getAllProgramsQuery.data
+                        ?.filter(program => !isProgramInFuture(program))
+                        .map((program) => (
                           <Grid item xs={12} sm={6} md={4} key={program.id}>
-                            <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                              <Box sx={{ position: 'relative' }}>
-                                <CardMedia
-                                  component="img"
-                                  height="200"
-                                  image={ imageEndpoint()  + program.image}
-                                  alt="program image"
-                                />
-                                { !isFull && daysLeft < 7 && (
-                                  <Alert
-                                    severity="warning"
-                                    sx={{
-                                      position: 'absolute',
-                                      top: 0,
-                                      left: 0,
-                                      width: '100%',
-                                      boxSizing: 'border-box',
-                                      borderRadius: 0,
-                                      opacity: 0.8,
-                                    }}
-                                  >
-                                    {daysLeft} {daysLeft === 1 ? "day" : "days"} left to register for the program
-                                  </Alert>
-                                )}
-                                {isFull && (
-                                  <Alert
-                                    severity="error"
-                                    sx={{
-                                      position: 'absolute',
-                                      top: 0,
-                                      right: 0,
-                                      width: '100%',
-                                      boxSizing: 'border-box',
-                                      borderRadius: 0,
-                                      opacity: 0.8,
-                                    }}
-                                  >
-                                    The program has reach its maximum number of volunteers
-                                  </Alert>
-                                )}
-                              </Box>
+                            <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%', opacity: 0.6 }}>
+                              <CardMedia
+                                component="img"
+                                height="200"
+                                image={imageEndpoint() + program.image}
+                                alt="program image"
+                              />
                               <CardContent>
                                 <Typography variant="h6" gutterBottom>{program.name}</Typography>
                                 <Typography variant="body1">Date: {program.startDate ? formatDate(program.startDate) : "N/A"}</Typography>
@@ -182,13 +221,13 @@ export default function Page() {
                                 <Typography variant="body1">Location: {program.location}</Typography>
                               </CardContent>
                               <Box mt="auto" p={2}>
-                                <Button variant="contained" onClick={() => handleViewMore(program)}>View More</Button>
+                                <Button disabled variant="contained" onClick={() => handleViewMore(program)}>View More</Button>
                               </Box>
                             </Card>
                           </Grid>
-                        );
-                      })}
-                  </Grid>
+                        ))}
+                    </Grid>
+                  </>
                 )}
               </>
             )}
@@ -200,7 +239,7 @@ export default function Page() {
 
       {/* Modal Popup for Program Details */}
       <Modal open={!!selectedProgram} onClose={handleCloseModal}>
-        <Card 
+        <Card
           sx={{
             position: "absolute",
             top: "50%",
@@ -212,7 +251,7 @@ export default function Page() {
             bgcolor: "background.paper",
             boxShadow: 24,
             p: 4,
-          }} 
+          }}
         >
           <CardMedia component="img" height="200" image={imageEndpoint() + selectedProgram?.image} alt="program image" />
           <CardContent>
@@ -227,7 +266,6 @@ export default function Page() {
             <Divider />
             <br />
             <Typography variant="body1">Registered Volunteers: {volunteerCount}</Typography>
-            
             {isFull ? (
               <Alert severity="error">This program is full and cannot accept more volunteers.</Alert>
             ) : (
@@ -244,12 +282,6 @@ export default function Page() {
         </Card>
       </Modal>
 
-
-
-
-        
-
-      
       <Snackbar
         open={!!successMessage}
         autoHideDuration={6000}

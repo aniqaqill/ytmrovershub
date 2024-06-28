@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, TextField, MenuItem, Select, FormControl, InputLabel, type SelectChangeEvent, Snackbar, Alert  } from "@mui/material";
+import {
+  Button, Dialog, DialogActions, DialogContent, DialogTitle, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, TextField, MenuItem, Select, FormControl, InputLabel, Snackbar, Alert, Divider, Stack
+} from "@mui/material";
+import type { SelectChangeEvent } from "@mui/material/Select";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
-
 
 interface User {
   id: string;
@@ -19,6 +21,8 @@ export default function Page() {
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<User | null>(null); // State to hold form data
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const updateUser = api.userInfo.updateUserById.useMutation();
   const getAllUsersQuery = api.userInfo.getAllUser.useQuery();
@@ -74,10 +78,13 @@ export default function Page() {
     setSnackbarOpen(false);
   };
 
-
-
-  //get user list
+  // Filter users based on search and role filter
   const { data: userList } = getAllUsersQuery;
+  const filteredUsers = userList?.filter(user =>
+    (user.name?.toLowerCase().includes(search.toLowerCase()) ?? user.email?.toLowerCase().includes(search.toLowerCase())) &&
+    (roleFilter ? user.role === roleFilter : true) &&
+    user.role !== "admin"
+  );
 
   useEffect(() => {
     if (!isLoggedInAdmin) {
@@ -94,7 +101,32 @@ export default function Page() {
       <BaseLayout pageIndex={1}>
         {isLoggedInAdmin ? (
           <>
-            <Typography variant="h5">List of User</Typography>
+            <br />
+            <Typography variant="h5">List of Users</Typography>
+            <Divider />
+            <br />
+            <Stack direction="row" spacing={2} marginBottom={2}>
+              <TextField
+                label="Search by Name or Email"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                variant="outlined"
+                fullWidth
+              />
+              <FormControl fullWidth>
+                <InputLabel id="role-filter-label">Filter by Role</InputLabel>
+                <Select
+                  labelId="role-filter-label"
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  label="Filter by Role"
+                >
+                  <MenuItem value="">All</MenuItem>
+                  <MenuItem value="volunteer">Volunteer</MenuItem>
+                  <MenuItem value="coordinator">Coordinator</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
             <TableContainer>
               <Table>
                 <TableHead>
@@ -107,7 +139,7 @@ export default function Page() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {userList?.map((user) => (
+                  {filteredUsers?.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
@@ -182,11 +214,11 @@ export default function Page() {
               open={snackbarOpen}
               autoHideDuration={6000}
               onClose={handleCloseSnackbar}
-              >
-                <Alert onClose={handleCloseSnackbar} severity="success">
-                  User updated successfully!
-                </Alert>
-                </Snackbar>
+            >
+              <Alert onClose={handleCloseSnackbar} severity="success">
+                User updated successfully!
+              </Alert>
+            </Snackbar>
 
           </>
         ) : (

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import BaseLayout from "~/components/BaseLayout";
 import { useSession } from "next-auth/react";
@@ -33,10 +33,18 @@ export default function CreateMaterial() {
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const router = useRouter();
-
   const isLoggedInCoordinator = useMemo(() => {
     return sessionData?.user && sessionData.user.role === "coordinator";
   }, [sessionData]);
+
+  useEffect(() => {
+    if (!isLoggedInCoordinator) {
+        const timer = setTimeout(() => {
+          window.location.href = "/";
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+}, [isLoggedInCoordinator]);
 
   const createMaterial = api.materialInfo.createAidMaterial.useMutation();
 
