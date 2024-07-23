@@ -12,8 +12,7 @@ YTM Rovers Hub is a web application designed to streamline the management of vol
 - [Features](#features)
 - [Dependencies](#dependencies)
 - [Configuration](#configuration)
-- [Documentation](#documentation)
-- [Examples](#examples)
+- [User Manual for Application](#examples)
 - [Troubleshooting](#troubleshooting)
 - [Contributors](#contributors)
 - [License](#license)
@@ -92,19 +91,152 @@ For detailed documentation, refer to the following sections:
 - **User Guide**: [User Guide]
 - **Developer Guide**: [Developer Guide]
 
-## Examples
+## User Manual for Application
 
-### Creating a Program
+## Table of Contents
 
-1. Navigate to the "Create Program" section.
-2. Fill in the program details.
-3. Click "Submit" to save the program.
+1. [Introduction](#1-introduction)
+2. [Login Interface](#2-login-interface)
+3. [Profile Management Interface](#3-profile-management-interface)
+4. [Coordinator Dashboard Interface](#4-coordinator-dashboard-interface)
+5. [Program Creation Interface](#5-program-creation-interface)
+6. [Program Management Interface](#6-program-management-interface)
+7. [Program Viewing Interface](#7-program-viewing-interface)
+8. [Detailed Program Page](#8-detailed-program-page)
+9. [Registered Programs Interface for Volunteers](#9-registered-programs-interface-for-volunteers)
+10. [Program Completion Form Interface](#10-program-completion-form-interface)
+11. [Completion Form Verification Interface](#11-completion-form-verification-interface)
+12. [Aid Materials Management Interface](#12-aid-materials-management-interface)
+13. [User Management Interface](#13-user-management-interface)
 
-### Registering a Volunteer
+## 1. Introduction
 
-1. Go to the "Register" page.
-2. Fill out the registration form.
-3. Confirm your email to complete registration.
+Welcome to the application! This manual is designed to help you navigate and utilize the features of the system effectively. Whether you are a volunteer or a coordinator, this guide will walk you through each interface and its functionalities.
+
+## 2. Login Interface
+
+### Overview
+The Login Interface allows users to access their accounts by entering their credentials.
+
+### Steps to Log In
+1. Open the application and navigate to the Login Interface.
+2. Enter your username and password in the provided fields.
+3. Click the "Login" button.
+4. Volunteers will be redirected to the Volunteer Dashboard Interface.
+5. Coordinators will be redirected to the Coordinator Dashboard Interface.
+
+## 3. Profile Management Interface
+
+### Overview
+The Profile Management Interface allows you to update and manage your personal information.
+
+### Steps to Manage Your Profile
+1. Access the Profile Management Interface from your dashboard.
+2. Update your personal and contact information as needed.
+3. Click "Save" to apply your changes.
+4. Your updated profile information will be reflected throughout the system.
+
+## 4. Coordinator Dashboard Interface
+
+### Overview
+The Coordinator Dashboard Interface provides coordinators with an overview of their managed programs and other relevant details.
+
+### Features
+- View a list of programs you manage.
+- Access program details.
+- Review completion forms submitted by volunteers.
+- Manage aid materials and perform administrative tasks.
+
+## 5. Program Creation Interface
+
+### Overview
+The Program Creation Interface enables coordinators to create new programs.
+
+### Steps to Create a Program
+1. Navigate to the Program Creation Interface.
+2. Enter program details such as name, date, time, location, and additional information.
+3. Set the maximum number of participants and select required aid materials.
+4. Click "Create" to add the program to your list of managed programs.
+
+## 6. Program Management Interface
+
+### Overview
+The Program Management Interface allows coordinators to edit and manage existing programs.
+
+### Steps to Manage a Program
+1. Select a program from your list of managed programs.
+2. Access its details and make necessary changes.
+3. Update the program status, participant limit, and manage associated resources.
+4. Save your changes to update the program information.
+
+## 7. Program Viewing Interface
+
+### Overview
+The Program Viewing Interface allows both volunteers and coordinators to view program details.
+
+### Features
+- Search or browse programs.
+- View program information including name, date, time, and location.
+- Get an overview of the program's purpose and requirements.
+
+## 8. Detailed Program Page
+
+### Overview
+The Detailed Program Page provides comprehensive information about each program.
+
+### Features
+- View detailed program information such as purpose, location, date, time, and agenda.
+- Access associated documents and resources.
+- Click "Register" to join the program.
+
+## 9. Registered Programs Interface for Volunteers
+
+### Overview
+The Registered Programs Interface shows a list of programs that the volunteer is currently registered for.
+
+### Features
+- View the list of registered programs.
+- Access program details and retrieve relevant information such as agenda and contact details.
+
+## 10. Program Completion Form Interface
+
+### Overview
+The Program Completion Form Interface allows volunteers to submit forms for completed programs.
+
+### Steps to Submit a Completion Form
+1. Access the completion form for a specific program.
+2. Fill in the required details such as date of completion and feedback.
+3. Upload any necessary images as evidence.
+4. Submit the form for review.
+
+## 11. Completion Form Verification Interface
+
+### Overview
+The Completion Form Verification Interface enables coordinators to verify submitted completion forms.
+
+### Steps to Verify a Completion Form
+1. Review the completion forms received for a program.
+2. Validate the information and check attached images.
+3. Mark the form as verified or incomplete.
+
+## 12. Aid Materials Management Interface
+
+### Overview
+The Aid Materials Management Interface allows coordinators to manage aid materials.
+
+### Features
+- View current inventory and update quantities.
+- Track distribution records and handle requests for additional materials.
+
+## 13. User Management Interface
+
+### Overview
+The User Management Interface is used by system administrators to manage coordinator accounts.
+
+### Features
+- Create new coordinator accounts.
+- Update existing coordinator information.
+- Ensure effective administration and oversight.
 
 ## Troubleshooting
 
